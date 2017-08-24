@@ -25,3 +25,6 @@ License
 
 Copyright 2017 Christian Stigen Larsen  
 Distributed under the GNU GPL v3 or later.
+
+The DMG-01 boot ROM in `roms/boot` is owned and copyrighted by Nintendo. You
+are not allowed to use or redistribute that file outside of this repository.

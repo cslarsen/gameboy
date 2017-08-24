@@ -1,4 +1,7 @@
-The DMB boot ROM in the file `boot` contains code to check that the cartridge
+About the DMG Boot ROM
+======================
+
+The DMG boot ROM in the file `boot` contains code to check that the cartridge
 is valid, along with the scrolling Nintendo logo and the ping.
 
 It was published by neviksti on the CherryROMs forum in 2003. He was able to

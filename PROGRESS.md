@@ -13,5 +13,5 @@ Day 1
 Started off by writing some skeletal Python code for a CPU, display and memory
 mapping.
 
-Found a boot ROM online. Since it comes with a disassembled listing, I'll write
-my own disassembler. That way I can check that it actually works.
+Found a boot ROM online. It comes with a disassembly listing. That way I can
+write my own disassembler and check that it works.
