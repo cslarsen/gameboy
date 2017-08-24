@@ -40,23 +40,39 @@ opcodes = {
     0x03: ("INC BC",            1,  8, None),
     0x04: ("INC B",             1,  4, ("Z", "0", "H")),
     0x05: ("DEC B",             1,  4, ("Z", "1", "H")),
-    0x06: ("LD B",              2,  8, None),
+    0x06: ("LD B, d8",          2,  8, None),
     0x0c: ("INC C",             1,  4, ("Z", "0", "H")),
+    0x0d: ("DEC C",             1,  4, ("Z", "1", "H")),
     0x0e: ("LD C, d8",          2,  8, None),
     0x10: ("STOP",              2,  4, None),
+    0x11: ("LD DE, d16",        3, 12, None),
+    0x13: ("INC DE",            1,  8, None),
+    0x18: ("JR r8",             2, 12, None),
+    0x1a: ("LD A, (DE)",        1, 18, None),
     0x20: ("LD (BC), A",        1,  8, None),
     0x21: ("LD HL, d16",        3, 12, None),
+    0x22: ("LD (HL+), A",       1,  8, None),
+    0x23: ("INC HL",            1,  8, None),
+    0x28: ("JR Z, r8",          2, (12, 8), None),
+    0x2e: ("LD L, d8",          2,  8, None),
     0x31: ("LD SP, d16",        3, 12, None),
     0x32: ("LD (HL-), A",       1,  8, None),
+    0x3d: ("DEC A",             1,  4, ("Z", "1", "H")),
     0x3e: ("LD A, d8",          2,  8, None),
+    0x67: ("LD H, A",           1,  4, None),
     0x76: ("HALT",              1,  4, None),
     0x77: ("LD (HL), A",        1,  8, None),
+    0x7b: ("LD A, E",           1,  4, None),
     0x9f: ("SBC A, A",          1,  4, ("Z", "1", "H", "C")),
     0xaf: ("XOR A",             1,  4, ("Z", "0", "0", "0")),
     0xcb: ("PREFIX CB",         1,  4, None),
+    0xcd: ("CALL a16",          3, 24, None),
     0xe0: ("LDH (a8), A",       2, 12, None), # NOTE: Others say LD, not LDH
     0xe2: ("LD ($ff00+C), A",   1,  8, None), # NOTE: Above link says 2 bytes!
-    0xfb: ("EI",                1,  4, None), # TODO: JR NZ, ??
+    0xea: ("LD (a16), A",       3, 16, None),
+    0xf3: ("DI",                1,  4, None), # TODO: JMP encode
+    0xf9: ("LD SP, HL",         1,  8, None),
+    0xfb: ("EI",                1,  4, None), # TODO: JMP encode
     0xfe: ("CP d8",             2,  8, ("Z", "1", "H", "C")),
     0xff: ("RST 38H",           1, 16, None),
 }
@@ -70,6 +86,12 @@ extended_opcodes = {
 def load_binary(filename):
     with open(filename, "rb") as f:
         return array("B", f.read())
+
+def format_hex(value):
+    if value <= 0xff:
+        return "$%0.2x" % value
+    else:
+        return "$%0.4x" % value
 
 def disassemble(code):
     index = 0
@@ -100,11 +122,11 @@ def disassemble(code):
             if "d8" in name:
                 # immediate data
                 value = arg
-                name = name.replace("d8", "$%0.2x" % value)
+                name = name.replace("d8", format_hex(value))
             elif "d16" in name:
                 # immediate data
                 value = arg
-                name = name.replace("d16", "$%0.2x" % value)
+                name = name.replace("d16", format_hex(value))
             elif "a8" in name:
                 # 8-bit unsigned data, which are added to 0xFF00 in certain
                 # instructions (replacement for missing IN and OUT
@@ -115,20 +137,22 @@ def disassemble(code):
                     value += 0xff00
                     name = name.replace("a8", "$ff00+$%0.2x" % arg)
                 else:
-                    name = name.replace("a8", "$%0.2x" % arg)
+                    name = name.replace("a8", format_hex(arg))
             elif "a16" in name:
                 # 16-bit address
                 value = arg
-                name = name.replace("a16", "addr $%x" % value)
+                name = name.replace("a16", "addr $%0.4x" % value)
             elif "r8" in name:
                 # 8-bit signed data, which are added to program counter
                 # TODO: Implement signedness
                 value = 0x7f - arg # TODO: Correct?
-                name = name.replace("r8", "pc + %s$%x" % ("-" if value<0 else
-                    "+"))
+                if value < 0:
+                    name = name.replace("r8", "pc - $%0.4x" % -value)
+                else:
+                    name = name.replace("r8", "pc + $%0.4x" % -value)
             else:
                 raise RuntimeError(
-                    "Opcode 0x%0.4x %r has unspecified argument: %s" %
+                    "Opcode 0x%0.2x %r has unspecified argument: %s" %
                         (opcode, name, arg))
 
         if opcode != 0xcb:
