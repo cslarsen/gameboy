@@ -20,9 +20,39 @@ from array import array
 import os
 import random
 
+# Maps opcode to
+#   - name
+#   - bytelength
+#   - cycle duration
+#   - affected flags
+opcodes = {
+    0x00: ("NOP", 1, 4, None),
+    0x01: ("LD BC, d16", 3, 12, None),
+    0x02: ("LD (BC), A", 1, 8, None),
+    0x03: ("INC BC", 1, 8, None),
+    0x04: ("INC B", 1, 4, ["Z", "0", "H"]),
+    0x05: ("DEC B", 1, 4, ["Z", "1", "H"]),
+    0x06: ("LD B, d8", 2, 8, None),
+    #...
+    0x31: ("LD SP, d16", 3, 12, None),
+    0xaf: ("XOR A", 1, 4, ["Z", "0", "0", "0"]),
+    0xfe: ("CP d8", 2, 8, ["Z", "1", "H", "C"]),
+}
+
 def load_binary(filename):
     with open(filename, "rb") as f:
         return array("B", f.read())
+
+def disassemble(code):
+    index = 0
+    while index < len(code):
+        current = code[index]
+        opcode, bytelen, cycles, flags = opcodes[current]
+        print("pos %d, raw 0x%x: %s" % (index, current, opcode))
+        for index in range(index+1, index+bytelen):
+            argument = code[index]
+            print("pos %d, argument raw 0x%x" % (index, argument))
+        index += 1
 
 def random_bytes(length):
     """Returns random integers in the range 0-255."""
@@ -93,10 +123,14 @@ class Gameboy(object):
             self.ram[address-0xa000:address-0xa000+length] = values
 
 def main():
-    boot_rom = load_binary(os.path.join(os.path.dirname(__file__), "roms",
-        "boot"))
+    boot_file = os.path.join(os.path.dirname(__file__), "roms", "boot")
+    boot_rom = load_binary(boot_file)
+
     gameboy = Gameboy(Cartridge(), boot_rom)
     print(gameboy)
+
+    print("Boot ROM disassembly:")
+    disassemble(boot_rom)
 
 if __name__ == "__main__":
     main()
