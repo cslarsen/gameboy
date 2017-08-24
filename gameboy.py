@@ -26,26 +26,39 @@ import sys
 #   - bytelength
 #   - cycle duration
 #   - affected flags (always in ZHNC order; 0 means reset after run)
+#
+# The mnemonics follow http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+#
+# NOTE: Instruction 0xe2 is said to take two bytes (one 8-bit argument), but
+# from elsewhere it seems like it only takes one. For example, see
+# https://stackoverflow.com/a/41422692/21028
+#
 opcodes = {
-    0x00: ("NOP",           1,  4, None),
-    0x01: ("LD BC",         3, 12, None),
-    0x02: ("LD (BC), A",    1,  8, None),
-    0x03: ("INC BC",        1,  8, None),
-    0x04: ("INC B",         1,  4, ("Z", "0", "H")),
-    0x05: ("DEC B",         1,  4, ("Z", "1", "H")),
-    0x06: ("LD B",          2,  8, None),
-    0x10: ("STOP 0",        2,  4, None),
-    0x20: ("LD (BC), A",    1,  8, None),
-    0x21: ("LD HL",         3, 12, None),
-    0x31: ("LD SP",         3, 12, None),
-    0x32: ("LD (HL-), A",   1,  8, None),
-    0x76: ("HALT",          1,  4, None),
-    0x9f: ("SBC A, A",      1,  4, ("Z", "1", "H", "C")),
-    0xaf: ("XOR A",         1,  4, ("Z", "0", "0", "0")),
-    0xcb: ("PREFIX CB",     1,  4, None),
-    0xfb: ("EI",            1,  4, None),
-    0xfe: ("CP",            2,  8, ("Z", "1", "H", "C")),
-    0xff: ("RST 38H",       1, 16, None),
+    0x00: ("NOP",               1,  4, None),
+    0x01: ("LD BC, d16",        3, 12, None),
+    0x02: ("LD (BC), A",        1,  8, None),
+    0x03: ("INC BC",            1,  8, None),
+    0x04: ("INC B",             1,  4, ("Z", "0", "H")),
+    0x05: ("DEC B",             1,  4, ("Z", "1", "H")),
+    0x06: ("LD B",              2,  8, None),
+    0x0c: ("INC C",             1,  4, ("Z", "0", "H")),
+    0x0e: ("LD C, d8",          2,  8, None),
+    0x10: ("STOP",              2,  4, None),
+    0x20: ("LD (BC), A",        1,  8, None),
+    0x21: ("LD HL, d16",        3, 12, None),
+    0x31: ("LD SP, d16",        3, 12, None),
+    0x32: ("LD (HL-), A",       1,  8, None),
+    0x3e: ("LD A, d8",          2,  8, None),
+    0x76: ("HALT",              1,  4, None),
+    0x77: ("LD (HL), A",        1,  8, None),
+    0x9f: ("SBC A, A",          1,  4, ("Z", "1", "H", "C")),
+    0xaf: ("XOR A",             1,  4, ("Z", "0", "0", "0")),
+    0xcb: ("PREFIX CB",         1,  4, None),
+    0xe0: ("LDH (a8), A",       2, 12, None), # NOTE: Others say LD, not LDH
+    0xe2: ("LD ($ff00+C), A",   1,  8, None), # NOTE: Above link says 2 bytes!
+    0xfb: ("EI",                1,  4, None), # TODO: JR NZ, ??
+    0xfe: ("CP d8",             2,  8, ("Z", "1", "H", "C")),
+    0xff: ("RST 38H",           1, 16, None),
 }
 
 # Opcodes after the prefix opcode 0xCB has been encountered.
@@ -68,11 +81,11 @@ def disassemble(code):
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, cycles, flags = table[opcode]
         except KeyError as e:
-            raise KeyError("Unknown %sopcode 0x%0.2X" % ( "prefix-" if prefix else
+            raise KeyError("Unknown %sopcode $%0.2x" % ( "prefix-" if prefix else
                 "", int(str(e))))
 
         if not prefix:
-            sys.stdout.write("0x%0.4x:  " % index)
+            sys.stdout.write("$%0.4x:  " % index)
             raw = ""
 
         for byte in code[index:index+bytelen]:
@@ -82,12 +95,45 @@ def disassemble(code):
         for offset in range(1, bytelen):
             arg |= code[index + offset] << 8*(offset-1)
 
-        instruction = name
+        instruction = ""
         if bytelen > 1:
-            instruction += ", 0x%x" % arg
+            if "d8" in name:
+                # immediate data
+                value = arg
+                name = name.replace("d8", "$%0.2x" % value)
+            elif "d16" in name:
+                # immediate data
+                value = arg
+                name = name.replace("d16", "$%0.2x" % value)
+            elif "a8" in name:
+                # 8-bit unsigned data, which are added to 0xFF00 in certain
+                # instructions (replacement for missing IN and OUT
+                # instructions)
+                # TODO: Add to 0xff00 where applicable
+                value = arg
+                if opcode == 0xe0:
+                    value += 0xff00
+                    name = name.replace("a8", "$ff00+$%0.2x" % arg)
+                else:
+                    name = name.replace("a8", "$%0.2x" % arg)
+            elif "a16" in name:
+                # 16-bit address
+                value = arg
+                name = name.replace("a16", "addr $%x" % value)
+            elif "r8" in name:
+                # 8-bit signed data, which are added to program counter
+                # TODO: Implement signedness
+                value = 0x7f - arg # TODO: Correct?
+                name = name.replace("r8", "pc + %s$%x" % ("-" if value<0 else
+                    "+"))
+            else:
+                raise RuntimeError(
+                    "Opcode 0x%0.4x %r has unspecified argument: %s" %
+                        (opcode, name, arg))
 
         if opcode != 0xcb:
             sys.stdout.write("%-20s " % raw)
+            instruction = name + instruction
             sys.stdout.write("%-18s" % instruction)
 
             if flags is not None:
@@ -115,6 +161,41 @@ class CPU(object):
     """
     def __init__(self):
         self.MHz = 4.194304
+        self._flags = 0
+        self.stack_pointer = 0
+        self.program_counter = 0
+        self.register_A = 0
+        self.register_B = 0
+        self.register_C = 0
+        self.register_D = 0
+        self.register_E = 0
+        self.register_H = 0
+        self.register_L = 0
+
+    @property
+    def flags(self):
+        return self._flags
+
+    @flags.setter
+    def flags(self, value):
+        assert(0 <= value <= 7)
+        self._flags = value
+
+    @property
+    def zero_flagged(self):
+        return (self._flags & 7) != 0
+
+    @property
+    def subtract_flagged(self):
+        return (self._flags & 6) != 0
+
+    @property
+    def half_carry_flagged(self):
+        return (self._flags & 5) != 0
+
+    @property
+    def carry_flagged(self):
+        return (self._flags & 4) != 0
 
 class Display(object):
     def __init__(self):
