@@ -4,6 +4,14 @@ Gameboy Emulator in Python
 This is my attempt to make a fully working Gameboy emulator from scratch,
 without looking at any other implementation.
 
+Status
+======
+
+This is *not yet* a working version.
+
+I'm just pushing to this repo as the project proceeds. See the file
+[PROGRESS.md](PROGRESS.md) for a few notes.
+
 References
 ==========
 
