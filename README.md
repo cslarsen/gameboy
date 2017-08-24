@@ -1,9 +1,11 @@
-Gameboy
-=======
+Gameboy Emulator in Python
+==========================
 
-Attempt to make a fully working Gameboy emulator from scratch.
+This is my attempt to make a fully working Gameboy emulator from scratch,
+without looking at any other implementation.
 
-Sources I've used to build this (tried not to cheat by looking at other code):
+References
+==========
 
   * [Gameboy on Wikipedia](https://en.wikipedia.org/wiki/Game_Boy)
   * [The Game Boy Project](http://marc.rawer.de/Gameboy/Docs/GBProject.pdf)
