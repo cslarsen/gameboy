@@ -1,12 +1,35 @@
 #! /usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+"""
+A Gameboy Emulator.
+
+Implementation notes:
+
+    * On power up, all RAM is set to random values. This is how a real Gameboy
+    works, and I want to emulate that (e.g., custom made programs will have to
+    clear out memory first. I'd like this emulator to behave like that.)
+"""
+
+__author__ = "Christian Stigen Larsen"
+__copyright__ = "Copyright 2017 Christian Stigen Larsen"
+__license__ = "The GNU GPL v3 or later"
+__version__ = "0.1"
+
 from array import array
 import os
+import random
 
 def load_binary(filename):
     with open(filename, "rb") as f:
-        return array("b", f.read())
+        return array("B", f.read())
+
+def random_bytes(length):
+    """Returns random integers in the range 0-255."""
+    r = array("B")
+    for i in range(length):
+        r.append(random.randint(0x00, 0xff))
+    return r
 
 class CPU(object):
     """
@@ -19,7 +42,7 @@ class CPU(object):
 
 class Display(object):
     def __init__(self):
-        self.ram = array("b", [0]*8000)
+        self.ram = random_bytes(8000)
         self.vblank_duration = 1.1
         self.fps = 59.7
 
@@ -33,7 +56,7 @@ class Display(object):
 
 class Cartridge(object):
     def __init__(self, rom=None):
-        self.rom = array("b", [0]*32000) if rom is None else rom
+        self.rom = array("B", [0]*32000) if rom is None else rom
         assert(len(self.rom) >= 32000)
 
 class Gameboy(object):
@@ -42,7 +65,7 @@ class Gameboy(object):
         self.cartridge = cartridge
         self.cpu = CPU()
         self.display = Display()
-        self.ram = array("b", [0]*8000)
+        self.ram = random_bytes(8000)
 
     def __repr__(self):
         return "<Gameboy: %d bytes boot ROM>" % len(self.bootstrap_rom)
