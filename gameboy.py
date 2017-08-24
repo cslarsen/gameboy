@@ -77,24 +77,32 @@ opcodes = {
     0xff: ("RST 38H",           1, 16, None),
 }
 
-# Opcodes after the prefix opcode 0xCB has been encountered.
-# Byte lengths here are WITHOUT the preceding prefix opcode 0xcb
+# Extended opcodes. Use this table after the opcode 0xcb has been encountered
+# from the preceding table. BYte lengths here are EXCLUSIVE the preceding
+# prefix opcode.
 extended_opcodes = {
     0x7c: ("BIT 7, H",      1, 8, ("Z", "0", "1")),
 }
 
 def load_binary(filename):
+    """Reads a binary file image into an unsigned 8-bit array."""
     with open(filename, "rb") as f:
         return array("B", f.read())
 
 def format_hex(value):
-    if value <= 0xff:
-        return "$%0.2x" % value
+    """Formats hex value suitable for disassembly."""
+    sign = "" if value>=0 else "-"
+    if abs(value) <= 0xff:
+        return "%s$%0.2x" % (sign, abs(value))
     else:
-        return "$%0.4x" % value
+        return "%s$%0.4x" % (sign, abs(value))
 
 def disassemble(code):
+    """Disassembles binary code."""
+    # TODO: Add start_address argument
     index = 0
+
+    # Whether the previous instruciton was the 0xcb prefix opcode
     prefix = False
 
     while index < len(code):
