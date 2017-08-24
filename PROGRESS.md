@@ -15,3 +15,10 @@ mapping.
 
 Found a boot ROM online. It comes with a disassembly listing. That way I can
 write my own disassembler and check that it works.
+
+Glad I started on the disassembler. Very easy to get the opcode tables wrong.
+
+Got to spend almost six hours on this today. Not much progress, but I like to
+go slowly, but steadily. I'll need to finish the disassembler, then add the
+rest of the opcodes. When that's done, I should be able to copy the disassembly
+code for use in the CPU instruction dispatcher.
