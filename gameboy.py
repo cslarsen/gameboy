@@ -19,24 +19,36 @@ __version__ = "0.1"
 from array import array
 import os
 import random
+import sys
 
 # Maps opcode to
-#   - name
+#   - (name, arguments ...)
 #   - bytelength
 #   - cycle duration
 #   - affected flags
 opcodes = {
     0x00: ("NOP", 1, 4, None),
-    0x01: ("LD BC, d16", 3, 12, None),
+    0x01: ("LD BC", 3, 12, None),
     0x02: ("LD (BC), A", 1, 8, None),
     0x03: ("INC BC", 1, 8, None),
-    0x04: ("INC B", 1, 4, ["Z", "0", "H"]),
-    0x05: ("DEC B", 1, 4, ["Z", "1", "H"]),
+    0x04: ("INC B", 1, 4, ("Z", "0", "H")),
+    0x05: ("DEC B", 1, 4, ("Z", "1", "H")),
     0x06: ("LD B, d8", 2, 8, None),
-    #...
-    0x31: ("LD SP, d16", 3, 12, None),
-    0xaf: ("XOR A", 1, 4, ["Z", "0", "0", "0"]),
-    0xfe: ("CP d8", 2, 8, ["Z", "1", "H", "C"]),
+    #... unsorted
+    0x21: ("LD HL", 3, 12, None),
+    0x31: ("LD SP", 3, 12, None),
+    0x32: ("LD (HL-), A", 1, 8, None),
+    0x76: ("HALT", 1, 4, None),
+    0x9f: ("SBC A, A", 1, 4, ("Z", "1", "H", "C")),
+    0xaf: ("XOR A", 1, 4, ("Z", "0", "0", "0")),
+    0xfe: ("CP d8", 2, 8, ("Z", "1", "H", "C")),
+    0xff: ("RST 38H", 1, 16, None),
+    0xcb: ("PREFIX CB", 1, 4, None),
+}
+
+# Opcodes after the prefix opcode 0xCB has been encountered
+extended_opcodes = {
+    0x7c: ("BIT 7, H", 2, 8, ("Z", "0", "1")),
 }
 
 def load_binary(filename):
@@ -45,14 +57,45 @@ def load_binary(filename):
 
 def disassemble(code):
     index = 0
+    prefix = False
     while index < len(code):
-        current = code[index]
-        opcode, bytelen, cycles, flags = opcodes[current]
-        print("pos %d, raw 0x%x: %s" % (index, current, opcode))
-        for index in range(index+1, index+bytelen):
-            argument = code[index]
-            print("pos %d, argument raw 0x%x" % (index, argument))
-        index += 1
+        try:
+            opcode = code[index]
+            table = opcodes if not prefix else extended_opcodes
+            name, bytelen, cycles, flags = table[opcode]
+        except KeyError as e:
+            raise KeyError("Unknown %sopcode 0x%X" % ( "prefix-" if prefix else
+                "", int(str(e))))
+
+        if not prefix:
+            sys.stdout.write("0x%0.4x:  " % index)
+            raw = ""
+
+        for byte in code[index:index+bytelen]:
+            raw += "0x%2x " % byte
+
+        instruction = name
+
+        arg = 0
+        for offset in range(1, bytelen):
+            arg |= code[index + offset] << 8*(offset-1)
+
+        if bytelen > 1:
+            instruction += ", 0x%x" % arg
+
+        if opcode != 0xcb:
+            sys.stdout.write("%-20s " % raw)
+            sys.stdout.write("%-18s" % instruction)
+
+            if flags is not None:
+                sys.stdout.write(" flags %s" % " ".join(sorted(set(flags))))
+
+            prefix = False
+            sys.stdout.write("\n")
+        else:
+            prefix = True
+
+        index += bytelen
 
 def random_bytes(length):
     """Returns random integers in the range 0-255."""
@@ -129,7 +172,7 @@ def main():
     gameboy = Gameboy(Cartridge(), boot_rom)
     print(gameboy)
 
-    print("Boot ROM disassembly:")
+    print("Boot ROM disassembly\n")
     disassemble(boot_rom)
 
 if __name__ == "__main__":
