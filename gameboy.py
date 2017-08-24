@@ -2,10 +2,18 @@
 # -*- encoding: utf-8 -*-
 
 from array import array
+import os
 
+def load_binary(filename):
+    with open(filename, "rb") as f:
+        return array("b", f.read())
 
 class CPU(object):
-    """An 8-bit Sharp LR35902 CPU running at 4.19 MHz."""
+    """
+    An 8-bit Sharp LR35902 CPU running at 4.19 MHz.
+
+    This CPU is very similar to the Intel 8080 and the Zilog Z80.
+    """
     def __init__(self):
         self.MHz = 4.194304
 
@@ -29,12 +37,15 @@ class Cartridge(object):
         assert(len(self.rom) >= 32000)
 
 class Gameboy(object):
-    def __init__(self, cartridge):
-        self.bootstrap_rom = array("b", [0]*256)
+    def __init__(self, cartridge, boot_rom):
+        self.bootstrap_rom = boot_rom
         self.cartridge = cartridge
         self.cpu = CPU()
         self.display = Display()
         self.ram = array("b", [0]*8000)
+
+    def __repr__(self):
+        return "<Gameboy: %d bytes boot ROM>" % len(self.bootstrap_rom)
 
     def peek(self, address, length=1):
         """Reads a byte in memory."""
@@ -59,7 +70,10 @@ class Gameboy(object):
             self.ram[address-0xa000:address-0xa000+length] = values
 
 def main():
-    gameboy = Gameboy(Cartridge())
+    boot_rom = load_binary(os.path.join(os.path.dirname(__file__), "roms",
+        "boot"))
+    gameboy = Gameboy(Cartridge(), boot_rom)
+    print(gameboy)
 
 if __name__ == "__main__":
     main()
