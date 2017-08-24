@@ -25,30 +25,33 @@ import sys
 #   - (name, arguments ...)
 #   - bytelength
 #   - cycle duration
-#   - affected flags
+#   - affected flags (always in ZHNC order; 0 means reset after run)
 opcodes = {
-    0x00: ("NOP", 1, 4, None),
-    0x01: ("LD BC", 3, 12, None),
-    0x02: ("LD (BC), A", 1, 8, None),
-    0x03: ("INC BC", 1, 8, None),
-    0x04: ("INC B", 1, 4, ("Z", "0", "H")),
-    0x05: ("DEC B", 1, 4, ("Z", "1", "H")),
-    0x06: ("LD B, d8", 2, 8, None),
-    #... unsorted
-    0x21: ("LD HL", 3, 12, None),
-    0x31: ("LD SP", 3, 12, None),
-    0x32: ("LD (HL-), A", 1, 8, None),
-    0x76: ("HALT", 1, 4, None),
-    0x9f: ("SBC A, A", 1, 4, ("Z", "1", "H", "C")),
-    0xaf: ("XOR A", 1, 4, ("Z", "0", "0", "0")),
-    0xfe: ("CP d8", 2, 8, ("Z", "1", "H", "C")),
-    0xff: ("RST 38H", 1, 16, None),
-    0xcb: ("PREFIX CB", 1, 4, None),
+    0x00: ("NOP",           1,  4, None),
+    0x01: ("LD BC",         3, 12, None),
+    0x02: ("LD (BC), A",    1,  8, None),
+    0x03: ("INC BC",        1,  8, None),
+    0x04: ("INC B",         1,  4, ("Z", "0", "H")),
+    0x05: ("DEC B",         1,  4, ("Z", "1", "H")),
+    0x06: ("LD B",          2,  8, None),
+    0x10: ("STOP 0",        2,  4, None),
+    0x20: ("LD (BC), A",    1,  8, None),
+    0x21: ("LD HL",         3, 12, None),
+    0x31: ("LD SP",         3, 12, None),
+    0x32: ("LD (HL-), A",   1,  8, None),
+    0x76: ("HALT",          1,  4, None),
+    0x9f: ("SBC A, A",      1,  4, ("Z", "1", "H", "C")),
+    0xaf: ("XOR A",         1,  4, ("Z", "0", "0", "0")),
+    0xcb: ("PREFIX CB",     1,  4, None),
+    0xfb: ("EI",            1,  4, None),
+    0xfe: ("CP",            2,  8, ("Z", "1", "H", "C")),
+    0xff: ("RST 38H",       1, 16, None),
 }
 
-# Opcodes after the prefix opcode 0xCB has been encountered
+# Opcodes after the prefix opcode 0xCB has been encountered.
+# Byte lengths here are WITHOUT the preceding prefix opcode 0xcb
 extended_opcodes = {
-    0x7c: ("BIT 7, H", 2, 8, ("Z", "0", "1")),
+    0x7c: ("BIT 7, H",      1, 8, ("Z", "0", "1")),
 }
 
 def load_binary(filename):
@@ -58,13 +61,14 @@ def load_binary(filename):
 def disassemble(code):
     index = 0
     prefix = False
+
     while index < len(code):
         try:
             opcode = code[index]
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, cycles, flags = table[opcode]
         except KeyError as e:
-            raise KeyError("Unknown %sopcode 0x%X" % ( "prefix-" if prefix else
+            raise KeyError("Unknown %sopcode 0x%0.2X" % ( "prefix-" if prefix else
                 "", int(str(e))))
 
         if not prefix:
@@ -72,14 +76,13 @@ def disassemble(code):
             raw = ""
 
         for byte in code[index:index+bytelen]:
-            raw += "0x%2x " % byte
-
-        instruction = name
+            raw += "0x%0.2x " % byte
 
         arg = 0
         for offset in range(1, bytelen):
             arg |= code[index + offset] << 8*(offset-1)
 
+        instruction = name
         if bytelen > 1:
             instruction += ", 0x%x" % arg
 
@@ -88,7 +91,7 @@ def disassemble(code):
             sys.stdout.write("%-18s" % instruction)
 
             if flags is not None:
-                sys.stdout.write(" flags %s" % " ".join(sorted(set(flags))))
+                sys.stdout.write(" flags %s" % " ".join(flags))
 
             prefix = False
             sys.stdout.write("\n")
