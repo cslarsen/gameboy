@@ -136,7 +136,11 @@ class CPU(object):
         opcode = self.fetch()
         name, bytelen, cycles, flags, arg = self.decode(opcode)
 
-        print("$%0.4x:  0x%0.2x  %s" % (address, opcode, name))
+        if flags is None:
+            flags = None
+
+        print("$%0.4x:  0x%0.2x  %s flags: %s" % (address, opcode, name,
+            flags))
         print("pc=$%0.4x sp=$%0.4x A=$%x B=$%x C=$%x D=$%x E=$%x F=$%x H=$%x L=$%x" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
