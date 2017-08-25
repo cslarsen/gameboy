@@ -1,14 +1,14 @@
 import os
 import sys
+from disassembler import disassemble
+from argparse import ArgumentParser
+
 from __init__ import (
     __copyright__,
     Cartridge,
-    disassemble,
     Gameboy,
     load_binary,
 )
-
-from argparse import ArgumentParser
 
 def find_default_boot_rom():
     return os.path.join(os.path.dirname(__file__), "roms", "boot")
@@ -50,6 +50,12 @@ def log(msg):
     sys.stdout.write("%s\n" % msg)
     sys.stdout.flush()
 
+def wait_enter():
+    if sys.version_info.major < 3:
+        return raw_input()
+    else:
+        return input()
+
 def main():
     opt = parse_command_line_args()
 
@@ -75,6 +81,12 @@ def main():
         gameboy = Gameboy(cartridge, boot)
 
         print(gameboy)
+
+        while True:
+            gameboy.cpu.step()
+            if wait_enter().strip().lower() == "q":
+                break
+
         sys.exit(0)
 
 if __name__ == "__main__":
