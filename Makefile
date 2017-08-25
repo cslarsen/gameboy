@@ -6,5 +6,8 @@ run2:
 run3:
 	python3.3 gameboy
 
+disasm:
+	python gameboy --start-address=0x000 --disassemble=boot
+
 check:
 	python2 -m pyflakes gameboy/*.py
