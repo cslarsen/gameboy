@@ -11,6 +11,3 @@ class Gameboy(object):
         self.memory = MemoryController(self.boot_rom, self.display,
                 self.cartridge)
         self.cpu = CPU(self.memory)
-
-    def __repr__(self):
-        return "<Gameboy: %d bytes boot ROM>" % len(self.boot_rom)

@@ -70,11 +70,10 @@ def main():
         log("Booting Gameboy")
         gameboy = Gameboy(cartridge, boot)
 
-        print(gameboy)
+        log("Type CTRL+D or Q to quit. H for help.")
 
+        command = ""
         while True:
-            gameboy.cpu.step()
-
             try:
                 command = wait_enter("> ").strip().lower()
             except EOFError:
@@ -82,6 +81,15 @@ def main():
 
             if command.startswith("q"):
                 break
+            elif command.startswith("h"):
+                log("CTRL+D or Q to quit")
+                log("ENTER for next instruction")
+                log("R to print registers")
+                log("Registers are shown AFTER executiong the shown instruction")
+            elif command.startswith("r"):
+                gameboy.cpu.print_registers()
+            else:
+                gameboy.cpu.step()
 
         sys.exit(0)
 

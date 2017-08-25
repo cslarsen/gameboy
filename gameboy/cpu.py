@@ -21,7 +21,7 @@ class CPU(object):
         self.memory = memory_controller
         self.MHz = 4.194304
 
-        # Registers
+        # 8-bit registers
         self.A = 0
         self.B = 0
         self.C = 0
@@ -30,8 +30,13 @@ class CPU(object):
         self.F = 0 # flags register
         self.H = 0
         self.L = 0
-        self.pc = 0
+
+        # 16-bit registers
+        self.pc = 0 # and not 0x100, because we have a boot ROM
         self.sp = 0
+
+        # Amount of cycles spent
+        self.cycles = 0
 
     @property
     def zero_flagged(self):
@@ -110,19 +115,22 @@ class CPU(object):
             raw)))
         sys.stdout.write("  %-20s" % instruction)
 
+        self.execute(opcode, length, cycles, flags, arg)
+
         if flags is not None:
             sys.stdout.write("\nimplicit flags: %s" % " ".join(flags))
 
         sys.stdout.write("\n")
         sys.stdout.flush()
 
-        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
+        self.print_registers()
+
+    def print_registers(self):
+        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x cycles=%d" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
-                    self.F, self.H, self.L))
+                    self.F, self.H, self.L, self.cycles))
 
-        self.execute(opcode, length, flags, arg)
-
-    def execute(self, opcode, length, flags, arg=None):
+    def execute(self, opcode, length, cycles, flags, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
         # and much more elegantly
         if length == 1:
@@ -130,13 +138,13 @@ class CPU(object):
         else:
             assert(arg is not None)
 
+        zero = None
+
         if opcode == Opcode.LD_SP_d16:
-            assert(flags is None)
             self.sp = arg
         elif opcode == Opcode.XOR_A:
-            assert(flags is not None)
-            # TODO: Update flags
             self.A = 0
+            zero = True
         else:
             message = "Unknown opcode 0x%0.2x" % opcode
             if arg is None:
@@ -144,3 +152,21 @@ class CPU(object):
             else:
                 message += " with argument %s" % format_hex(arg)
             raise RuntimeError(message)
+
+        # Update flags after executing the instruction
+        if flags is not None:
+            for bit, flag in zip((7, 6, 5, 4), flags):
+                if flag == "0":
+                    # Unset flag
+                    self.F &= ~(1 << bit)
+                elif flag == "1":
+                    # Set flag
+                    self.F ^= 1<<bit
+                # TODO: Update ZHNC flags
+
+        if zero == True:
+            self.F ^= 1<<7
+
+        # Update cycle count
+        if isinstance(cycles, int):
+            self.cycles += cycles
