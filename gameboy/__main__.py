@@ -30,6 +30,12 @@ def parse_command_line_args():
             default=find_default_boot_rom(),
             help="Which boot ROM to use when powering up")
 
+    p.add_argument("--trace", default=False, action="store_true",
+            help="Prints each instruction with register contents")
+
+    p.add_argument("--debug", default=False, action="store_true",
+            help="Perform interactive step debugging")
+
     opt = p.parse_args()
 
     if isinstance(opt.start_address, str):
@@ -70,29 +76,43 @@ def main():
         log("Booting Gameboy")
         gameboy = Gameboy(cartridge, boot)
 
-        log("\nType CTRL+D or Q to quit, H for help.")
-        command = ""
-        gameboy.cpu.print_registers()
+        if opt.debug:
+            log("\nType CTRL+D or Q to quit, H for help.")
+            command = ""
+            gameboy.cpu.print_registers()
 
-        while True:
+            while True:
+                try:
+                    command = wait_enter("> ").strip().lower()
+                except EOFError:
+                    break
+
+                if command.startswith("q"):
+                    break
+                elif command.startswith("h"):
+                    log("CTRL+D or Q to quit")
+                    log("ENTER for next instruction")
+                    log("R to print registers")
+                    log("Registers are shown AFTER executiong the shown instruction")
+                elif command.startswith("r"):
+                    gameboy.cpu.print_registers()
+                else:
+                    try:
+                        gameboy.cpu.step(True)
+                    except Exception as e:
+                        log("\n\n*** Exception: %s" % e)
+                        gameboy.cpu.print_registers()
+                        log("")
+                        sys.exit(1)
+            sys.exit(0)
+        else:
             try:
-                command = wait_enter("> ").strip().lower()
-            except EOFError:
-                break
-
-            if command.startswith("q"):
-                break
-            elif command.startswith("h"):
-                log("CTRL+D or Q to quit")
-                log("ENTER for next instruction")
-                log("R to print registers")
-                log("Registers are shown AFTER executiong the shown instruction")
-            elif command.startswith("r"):
+                gameboy.cpu.run(trace=opt.trace)
+            except Exception as e:
+                log("\n*** Exception: %s" % e)
                 gameboy.cpu.print_registers()
-            else:
-                gameboy.cpu.step()
-
-        sys.exit(0)
+                log("")
+                raise
 
 if __name__ == "__main__":
     main()

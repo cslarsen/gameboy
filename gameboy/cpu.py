@@ -37,6 +37,9 @@ class CPU(object):
         # Amount of cycles spent
         self.cycles = 0
 
+        # Save last fully decoded instruction for errors
+        self.prev_inst = ""
+
     @property
     def zero_flagged(self):
         return (self.flags & 7) != 0
@@ -104,25 +107,32 @@ class CPU(object):
         self.pc += bytelen
         return name, bytelen, cycles, flags, arg, raw
 
-    def step(self):
+    def run(self, trace=False):
+        while True:
+            self.step(trace)
+
+    def step(self, trace=False):
         address = self.pc
         opcode = self.fetch()
         instruction, length, cycles, flags, arg, raw = self.decode(opcode)
 
-        sys.stdout.write("$%0.4x:" % address)
-        sys.stdout.write("  %-20s" % " ".join(map(lambda x: "0x%0.2x" % x,
-            raw)))
-        sys.stdout.write("  %-20s" % instruction)
+        self.prev_inst = "$%0.4x:" % address
+        self.prev_inst += "  %-20s" % " ".join(map(lambda x: "0x%0.2x" % x,
+            raw))
+        self.prev_inst += "  %-20s" % instruction
+
+        if trace:
+            sys.stdout.write(self.prev_inst)
 
         self.execute(opcode, length, cycles, flags, arg)
 
-        if flags is not None:
+        if trace and flags is not None:
             sys.stdout.write("\nimplicit flags: %s" % " ".join(flags))
 
-        sys.stdout.write("\n")
-        sys.stdout.flush()
-
-        self.print_registers()
+        if trace:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+            self.print_registers()
 
     def print_registers(self):
         print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x cycles=%d" %
@@ -163,11 +173,9 @@ class CPU(object):
             self.HL = arg
         else:
             message = "Unknown opcode 0x%0.2x" % opcode
-            if arg is None:
-                message += " without argument"
-            else:
+            if arg is not None:
                 message += " with argument %s" % format_hex(arg)
-            raise RuntimeError(message)
+            raise RuntimeError("%s\n%s" % (message, self.prev_inst))
 
         # Update flags after executing the instruction
         if flags is not None:
