@@ -171,6 +171,9 @@ class CPU(object):
             zero = True
         elif opcode == 0x21: # LD HL, d16
             self.HL = arg
+        elif opcode == 0x32: # LD (HL-), A
+            self.memory[self.HL] = self.A
+            self.HL -= 1
         else:
             message = "Unknown opcode 0x%0.2x" % opcode
             if arg is not None:

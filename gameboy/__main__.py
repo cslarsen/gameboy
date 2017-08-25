@@ -103,7 +103,7 @@ def main():
                         log("\n\n*** Exception: %s" % e)
                         gameboy.cpu.print_registers()
                         log("")
-                        sys.exit(1)
+                        raise
             sys.exit(0)
         else:
             try:
