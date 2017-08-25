@@ -1,20 +1,20 @@
 import os
 import sys
-from disassembler import disassemble
-from argparse import ArgumentParser
+import argparse
 
-from __init__ import (
-    __copyright__,
-    Cartridge,
-    Gameboy,
-    load_binary,
-)
+from __init__ import __copyright__
+from cartridge import Cartridge
+from disassembler import disassemble
+from gameboy import Gameboy
+from util import load_binary, log, wait_enter
 
 def find_default_boot_rom():
     return os.path.join(os.path.dirname(__file__), "roms", "boot")
 
 def parse_command_line_args():
-    p = ArgumentParser(description="A Gameboy Classic emulator", epilog=__copyright__)
+    p = argparse.ArgumentParser(
+            description="A Gameboy Classic emulator",
+            epilog=__copyright__)
 
     p.add_argument("-d", "--disassemble", metavar="FILE", default=None,
             help="Disassemble binary file. Specify 'boot' for boot ROM")
@@ -46,16 +46,6 @@ def parse_command_line_args():
 
     return opt
 
-def log(msg):
-    sys.stdout.write("%s\n" % msg)
-    sys.stdout.flush()
-
-def wait_enter():
-    if sys.version_info.major < 3:
-        return raw_input()
-    else:
-        return input()
-
 def main():
     opt = parse_command_line_args()
 
@@ -84,7 +74,13 @@ def main():
 
         while True:
             gameboy.cpu.step()
-            if wait_enter().strip().lower() == "q":
+
+            try:
+                command = wait_enter("> ").strip().lower()
+            except EOFError:
+                break
+
+            if command.startswith("q"):
                 break
 
         sys.exit(0)
