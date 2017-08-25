@@ -41,12 +41,17 @@ opcodes = {
     0x04: ("INC B",             1,  4, ("Z", "0", "H")),
     0x05: ("DEC B",             1,  4, ("Z", "1", "H")),
     0x06: ("LD B, d8",          2,  8, None),
+    0x08: ("LD (a16), SP",      3, 20, None), # NOTE: Unverified
+    0x0b: ("DEC BC",            1,  8, None), # NOTE: Unverified
     0x0c: ("INC C",             1,  4, ("Z", "0", "H")),
     0x0d: ("DEC C",             1,  4, ("Z", "1", "H")),
     0x0e: ("LD C, d8",          2,  8, None),
     0x10: ("STOP",              2,  4, None),
     0x11: ("LD DE, d16",        3, 12, None),
     0x13: ("INC DE",            1,  8, None),
+    0x15: ("DEC D",             1,  4, ("Z", "1", "H")),
+    0x16: ("LD D, d8",          2,  8, None),
+    0x17: ("RLA",               1,  4, None),
     0x18: ("JR r8",             2, 12, None),
     0x1a: ("LD A, (DE)",        1, 18, None),
     0x1d: ("DEC E",             1,  4, ("Z", "1", "H")),
@@ -55,21 +60,50 @@ opcodes = {
     0x21: ("LD HL, d16",        3, 12, None),
     0x22: ("LD (HL+), A",       1,  8, None),
     0x23: ("INC HL",            1,  8, None),
+    0x24: ("INC H",             1,  4, ("Z", "0", "H")),
     0x28: ("JR Z, r8",          2, (12, 8), None),
     0x2e: ("LD L, d8",          2,  8, None),
     0x31: ("LD SP, d16",        3, 12, None),
     0x32: ("LD (HL-), A",       1,  8, None),
+    0x33: ("INC SP",            1,  8, None), # NOTE: Unverified
+    0x3c: ("INC A",             1,  4, ("Z", "0", "H")), # NOTE: Unverified
     0x3d: ("DEC A",             1,  4, ("Z", "1", "H")),
     0x3e: ("LD A, d8",          2,  8, None),
+    0x42: ("LD B, D",           1,  4, None), # NOTE: Unverified
+    0x4f: ("LD C, A",           1,  4, None),
     0x57: ("LD D, A",           1,  4, None),
+    0x63: ("LD H, E",           1,  4, None), # NOTE: Unverified
+    0x66: ("LD H, (HL)",        1,  8, None), # NOTE: Unverified
     0x67: ("LD H, A",           1,  4, None),
+    0x6e: ("LD L, (HL)",        1,  8, None), # NOTE: Unverified
+    0x73: ("LD (HL), E",        1,  8, None), # NOTE: Unverified
     0x76: ("HALT",              1,  4, None),
     0x77: ("LD (HL), A",        1,  8, None),
+    0x78: ("LD A, B",           1,  4, None), # NOTE: Unverified
     0x7b: ("LD A, E",           1,  4, None),
+    0x7c: ("LD A, H",           1,  4, None),
+    0x7d: ("LD A, L",           1,  4, None), # NOTE: Unverified
+    0x83: ("ADD A, E",          1,  4, ("Z", "0", "H", "C")), # NOTE: Unverified
+    0x86: ("ADD A, (HL)",       1,  8, ("Z", "0", "H", "C")), # NOTE: Unverified, some say just "ADD (HL)"
+    0x88: ("ADC A, B",          1,  4, ("Z", "0", "H", "C")), # NOTE: Unverified
+    0x89: ("ADC A, C",          1,  4, ("Z", "0", "H", "C")), # NOTE: Unverified
+    0x90: ("SUB B",             1,  4, ("Z", "1", "H", "C")),
+    0x99: ("SBC A, C",          1,  4, ("Z", "1", "H", "C")), # NOTE: Unverified
     0x9f: ("SBC A, A",          1,  4, ("Z", "1", "H", "C")),
+    0xa5: ("AND L",             1,  4, ("Z", "0", "1", "0")), # NOTE: Unverified
     0xaf: ("XOR A",             1,  4, ("Z", "0", "0", "0")),
+    0xb9: ("CP C",              1,  4, ("Z", "1", "H", "C")), # NOTE: Unverified
+    0xbb: ("CP E",              1,  4, ("Z", "1", "H", "C")), # NOTE: Unverified
+    0xbe: ("CP (HL)",           1,  8, ("Z", "1", "H", "C")), # NOTE: Unverified
+    0xc1: ("POP BC",            1, 12, None),
+    0xc5: ("PUSH BC",           1, 16, None),
+    0xc9: ("RET",               1, 16, None),
     0xcb: ("PREFIX CB",         1,  4, None),
+    0xcc: ("CALL Z, a16",       3, (24, 12), None), # NOTE: Unverified
     0xcd: ("CALL a16",          3, 24, None),
+    0xce: ("ADD A, d8",         2,  8, ("Z", "0", "H", "C")),
+    0xd9: ("RETI",              1, 16, None), # NOTE: Unverified
+    0xdd: ("-",                 1,  0, None), # NOTE: Invalid instruction
     0xe0: ("LDH (a8), A",       2, 12, None), # NOTE: Others say LD, not LDH
     0xe2: ("LD ($ff00+C), A",   1,  8, None), # NOTE: Above link says 2 bytes!
     0xea: ("LD (a16), A",       3, 16, None),
@@ -87,7 +121,8 @@ opcodes = {
 # from the preceding table. BYte lengths here are EXCLUSIVE the preceding
 # prefix opcode.
 extended_opcodes = {
-    0x7c: ("BIT 7, H",      1, 8, ("Z", "0", "1")),
+    0x11: ("RL C",              1, 8, ("Z", "0", "0", "C")),
+    0x7c: ("BIT 7, H",          1, 8, ("Z", "0", "1")),
 }
 
 # Opcodes whose argument should be added with 0xff00
@@ -123,8 +158,8 @@ def disassemble(code, start_address=0x0000):
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, cycles, flags = table[opcode]
         except KeyError as e:
-            raise KeyError("Unknown %sopcode $%0.2x" % ( "prefix-" if prefix else
-                "", int(str(e))))
+            raise KeyError("Unknown %sopcode 0x%0.2x" % (
+                "prefixed " if prefix else "", int(str(e))))
 
         if not prefix:
             sys.stdout.write("$%0.4x:  " % address)
@@ -173,6 +208,15 @@ def disassemble(code, start_address=0x0000):
                 # where the PC is now at the next instruction
                 abs_addr = address + bytelen + value
 
+                # NOTE: For opcode 0x20, a disassembly says: "if $19 + bytes
+                # from $0134-$014D  don't add to $00" Seems I get somewhat
+                # different result from another disassembler for that
+                # particular code (boot code, position $00fa), other says jump
+                # to @$00fe instead of @$00fa). Actually, that listing's
+                # instruction is supposed to lock up, and from my disassembly
+                # it actually seems like the instruction jumps to itself
+                # forever. So this one may actually be the correct one.
+
                 if value < 0:
                     name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-value,
                         abs_addr))
@@ -190,6 +234,8 @@ def disassemble(code, start_address=0x0000):
             sys.stdout.write("%-24s" % instruction)
 
             if flags is not None:
+                for flag in flags:
+                    assert(flag in ("Z", "N", "H", "C", "0", "1"))
                 sys.stdout.write(" flags %s" % " ".join(flags))
 
             prefix = False
