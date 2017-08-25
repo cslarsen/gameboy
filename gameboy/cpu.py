@@ -7,6 +7,7 @@ from util import (
 
 from opcodes import (
     add_0xff00_opcodes,
+    Opcode,
     opcodes,
 )
 
@@ -94,13 +95,15 @@ class CPU(object):
                     "Opcode 0x%0.2x %r has unspecified argument: %s" %
                         (opcode, name, format_hex(arg)))
 
+        # TODO: Handle extended opcodes
+
         self.pc += bytelen
         return name, bytelen, cycles, flags, arg, raw
 
     def step(self):
         address = self.pc
         opcode = self.fetch()
-        instruction, bytelen, cycles, flags, arg, raw = self.decode(opcode)
+        instruction, length, cycles, flags, arg, raw = self.decode(opcode)
 
         sys.stdout.write("$%0.4x:" % address)
         sys.stdout.write("  %-20s" % " ".join(map(lambda x: "0x%0.2x" % x,
@@ -113,10 +116,31 @@ class CPU(object):
         sys.stdout.write("\n")
         sys.stdout.flush()
 
-        print("pc=$%0.4x sp=$%0.4x A=$%x B=$%x C=$%x D=$%x E=$%x F=$%x H=$%x L=$%x" %
+        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
 
-        # TODO: Decode additional arguments, extended opcodes, etc., then
-        # execute the instruction.
+        self.execute(opcode, length, flags, arg)
 
+    def execute(self, opcode, length, flags, arg=None):
+        # TODO: By changing the opcodes struct, we can do this programmatically
+        # and much more elegantly
+        if length == 1:
+            assert(arg is None)
+        else:
+            assert(arg is not None)
+
+        if opcode == Opcode.LD_SP_d16:
+            assert(flags is None)
+            self.sp = arg
+        elif opcode == Opcode.XOR_A:
+            assert(flags is not None)
+            # TODO: Update flags
+            self.A = 0
+        else:
+            message = "Unknown opcode 0x%0.2x" % opcode
+            if arg is None:
+                message += " without argument"
+            else:
+                message += " with argument %s" % format_hex(arg)
+            raise RuntimeError(message)

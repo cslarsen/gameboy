@@ -33,3 +33,10 @@ this point.
 
 Will now start with an instruction dispatcher that will eventually be able to
 run the boot code.
+
+Started on the instruction fetcher, decoder and executor. Added a very simple
+step-debugging interface. Will now need to actually implement those opcodes.
+This part will consist of reading and understanding the memory layout, the bank
+switching, how to update flags and so on. The execution of instructions is
+currently badly structured, so I'll have to do a lot by hand. When I understand
+it properly, I can abstract this further, reducing code.

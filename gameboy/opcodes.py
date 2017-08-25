@@ -15,6 +15,12 @@ elsewhere it seems like it only takes one. For example, see
 https://stackoverflow.com/a/41422692/21028
 """
 
+class Opcode(object):
+    """An enum of opcode values."""
+    NOP = 0x00
+    LD_SP_d16 = 0x31
+    XOR_A = 0xaf
+
 opcodes = {
     0x00: ("NOP",               1,  4, None),
     0x01: ("LD BC, d16",        3, 12, None),
