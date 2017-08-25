@@ -24,7 +24,7 @@ import sys
 # Maps opcode to
 #   - (name, arguments ...)
 #   - bytelength
-#   - cycle duration
+#   - cycle duration (two values: cycles if taken/not taken),
 #   - affected flags (always in ZHNC order; 0 means reset after run)
 #
 # The mnemonics follow http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html
@@ -49,7 +49,9 @@ opcodes = {
     0x13: ("INC DE",            1,  8, None),
     0x18: ("JR r8",             2, 12, None),
     0x1a: ("LD A, (DE)",        1, 18, None),
-    0x20: ("LD (BC), A",        1,  8, None),
+    0x1d: ("DEC E",             1,  4, ("Z", "1", "H")),
+    0x1e: ("LD E, d8",          2,  8, None),
+    0x20: ("JR NZ, r8",         2, (12, 8), None),
     0x21: ("LD HL, d16",        3, 12, None),
     0x22: ("LD (HL+), A",       1,  8, None),
     0x23: ("INC HL",            1,  8, None),
@@ -59,6 +61,7 @@ opcodes = {
     0x32: ("LD (HL-), A",       1,  8, None),
     0x3d: ("DEC A",             1,  4, ("Z", "1", "H")),
     0x3e: ("LD A, d8",          2,  8, None),
+    0x57: ("LD D, A",           1,  4, None),
     0x67: ("LD H, A",           1,  4, None),
     0x76: ("HALT",              1,  4, None),
     0x77: ("LD (HL), A",        1,  8, None),
@@ -70,9 +73,12 @@ opcodes = {
     0xe0: ("LDH (a8), A",       2, 12, None), # NOTE: Others say LD, not LDH
     0xe2: ("LD ($ff00+C), A",   1,  8, None), # NOTE: Above link says 2 bytes!
     0xea: ("LD (a16), A",       3, 16, None),
-    0xf3: ("DI",                1,  4, None), # TODO: JMP encode
+    0xf0: ("LDH A, (a8)",       2, 12, None),
+    0xf3: ("DI",                1,  4, None),
+    0xf7: ("RST 30H",           1, 16, None),
     0xf9: ("LD SP, HL",         1,  8, None),
-    0xfb: ("EI",                1,  4, None), # TODO: JMP encode
+    0xfa: ("LD A, (a16)",       3, 16, None),
+    0xfb: ("EI",                1,  4, None),
     0xfe: ("CP d8",             2,  8, ("Z", "1", "H", "C")),
     0xff: ("RST 38H",           1, 16, None),
 }
@@ -83,6 +89,12 @@ opcodes = {
 extended_opcodes = {
     0x7c: ("BIT 7, H",      1, 8, ("Z", "0", "1")),
 }
+
+# Opcodes whose argument should be added with 0xff00
+add_0xff00_opcodes = (
+    0xe0,
+    0xf0,
+)
 
 def load_binary(filename):
     """Reads a binary file image into an unsigned 8-bit array."""
@@ -97,9 +109,8 @@ def format_hex(value):
     else:
         return "%s$%0.4x" % (sign, abs(value))
 
-def disassemble(code):
+def disassemble(code, start_address=0x0000):
     """Disassembles binary code."""
-    # TODO: Add start_address argument
     index = 0
 
     # Whether the previous instruciton was the 0xcb prefix opcode
@@ -107,6 +118,7 @@ def disassemble(code):
 
     while index < len(code):
         try:
+            address = start_address + index
             opcode = code[index]
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, cycles, flags = table[opcode]
@@ -115,7 +127,7 @@ def disassemble(code):
                 "", int(str(e))))
 
         if not prefix:
-            sys.stdout.write("$%0.4x:  " % index)
+            sys.stdout.write("$%0.4x:  " % address)
             raw = ""
 
         for byte in code[index:index+bytelen]:
@@ -141,7 +153,7 @@ def disassemble(code):
                 # instructions)
                 # TODO: Add to 0xff00 where applicable
                 value = arg
-                if opcode == 0xe0:
+                if opcode in add_0xff00_opcodes:
                     value += 0xff00
                     name = name.replace("a8", "$ff00+$%0.2x" % arg)
                 else:
@@ -152,21 +164,30 @@ def disassemble(code):
                 name = name.replace("a16", "addr $%0.4x" % value)
             elif "r8" in name:
                 # 8-bit signed data, which are added to program counter
-                # TODO: Implement signedness
-                value = 0x7f - arg # TODO: Correct?
-                if value < 0:
-                    name = name.replace("r8", "pc - $%0.4x" % -value)
+                if arg > 127:
+                    value = -(256 - arg)
                 else:
-                    name = name.replace("r8", "pc + $%0.4x" % -value)
+                    value = arg
+
+                # calculate absolute address: PC (program counter) + value,
+                # where the PC is now at the next instruction
+                abs_addr = address + bytelen + value
+
+                if value < 0:
+                    name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-value,
+                        abs_addr))
+                else:
+                    name = name.replace("r8", "PC+$%0.4x (@$%0.4x)" %
+                            (value, abs_addr))
             else:
                 raise RuntimeError(
                     "Opcode 0x%0.2x %r has unspecified argument: %s" %
-                        (opcode, name, arg))
+                        (opcode, name, format_hex(arg)))
 
         if opcode != 0xcb:
             sys.stdout.write("%-20s " % raw)
             instruction = name + instruction
-            sys.stdout.write("%-18s" % instruction)
+            sys.stdout.write("%-24s" % instruction)
 
             if flags is not None:
                 sys.stdout.write(" flags %s" % " ".join(flags))
