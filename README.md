@@ -1,5 +1,5 @@
-Gameboy Emulator in Python
-==========================
+Gameboy Classic Emulator in Python
+==================================
 
 This is my attempt to make a fully working Gameboy emulator from scratch,
 without looking at any other implementation.
@@ -11,6 +11,17 @@ This is *not yet* a working version.
 
 I'm just pushing to this repo as the project proceeds. See the file
 [PROGRESS.md](PROGRESS.md) for a few notes.
+
+Usage
+=====
+
+To insert a cartridge and start the emulator:
+
+    $ python gameboy cartridge.gb
+
+To disassemble a file:
+
+    $ python gameboy --start-address=0x00 --disassemble=gameboy/roms/boot
 
 References
 ==========

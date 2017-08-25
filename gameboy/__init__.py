@@ -261,17 +261,3 @@ class Gameboy(object):
 
     def __repr__(self):
         return "<Gameboy: %d bytes boot ROM>" % len(self.bootstrap_rom)
-
-
-def main():
-    boot_file = os.path.join(os.path.dirname(__file__), "roms", "boot")
-    boot_rom = load_binary(boot_file)
-
-    gameboy = Gameboy(Cartridge(), boot_rom)
-    print(gameboy)
-
-    print("Boot ROM disassembly\n")
-    disassemble(boot_rom)
-
-if __name__ == "__main__":
-    main()
