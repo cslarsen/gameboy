@@ -136,6 +136,12 @@ def load_binary(filename):
     with open(filename, "rb") as f:
         return array("B", f.read())
 
+def unsigned8_to_signed(value):
+    if value > 127:
+        return -(256 - value)
+    else:
+        return value
+
 def format_hex(value):
     """Formats hex value suitable for disassembly."""
     sign = "" if value>=0 else "-"
@@ -199,10 +205,7 @@ def disassemble(code, start_address=0x0000):
                 name = name.replace("a16", "addr $%0.4x" % value)
             elif "r8" in name:
                 # 8-bit signed data, which are added to program counter
-                if arg > 127:
-                    value = -(256 - arg)
-                else:
-                    value = arg
+                value = unsigned8_to_signed(arg)
 
                 # calculate absolute address: PC (program counter) + value,
                 # where the PC is now at the next instruction
