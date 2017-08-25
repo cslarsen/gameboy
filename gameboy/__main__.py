@@ -70,9 +70,10 @@ def main():
         log("Booting Gameboy")
         gameboy = Gameboy(cartridge, boot)
 
-        log("Type CTRL+D or Q to quit. H for help.")
-
+        log("\nType CTRL+D or Q to quit, H for help.")
         command = ""
+        gameboy.cpu.print_registers()
+
         while True:
             try:
                 command = wait_enter("> ").strip().lower()

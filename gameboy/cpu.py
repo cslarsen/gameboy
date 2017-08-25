@@ -7,7 +7,6 @@ from util import (
 
 from opcodes import (
     add_0xff00_opcodes,
-    Opcode,
     opcodes,
 )
 
@@ -130,6 +129,16 @@ class CPU(object):
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L, self.cycles))
 
+    @property
+    def HL(self):
+        return self.H << 8 | self.L
+
+    @HL.setter
+    def HL(self, value):
+        assert(0 <= value <= 0xffff)
+        self.H = (value & 0xff00) >> 8
+        self.L = value & 0xff
+
     def execute(self, opcode, length, cycles, flags, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
         # and much more elegantly
@@ -139,12 +148,19 @@ class CPU(object):
             assert(arg is not None)
 
         zero = None
+        carry = None
+        half_carry = None
+        subtract = None
 
-        if opcode == Opcode.LD_SP_d16:
+        if opcode == 0x00: # NOP
+            pass
+        elif opcode == 0x31: # LD SP, d16
             self.sp = arg
-        elif opcode == Opcode.XOR_A:
+        elif opcode == 0xaf: # XOR A
             self.A = 0
             zero = True
+        elif opcode == 0x21: # LD HL, d16
+            self.HL = arg
         else:
             message = "Unknown opcode 0x%0.2x" % opcode
             if arg is None:
@@ -157,16 +173,18 @@ class CPU(object):
         if flags is not None:
             for bit, flag in zip((7, 6, 5, 4), flags):
                 if flag == "0":
-                    # Unset flag
                     self.F &= ~(1 << bit)
                 elif flag == "1":
-                    # Set flag
                     self.F ^= 1<<bit
-                # TODO: Update ZHNC flags
+                elif flag == "Z" and zero:
+                    self.F ^= 1<<bit
+                elif flag == "H" and half_carry:
+                    self.F ^= 1<<bit
+                elif flag == "N" and subtract:
+                    self.F ^= 1<<bit
+                elif flag == "C" and carry:
+                    self.F ^= 1<<bit
 
-        if zero == True:
-            self.F ^= 1<<7
-
-        # Update cycle count
+        # Update cycles for non-branching ops only
         if isinstance(cycles, int):
             self.cycles += cycles
