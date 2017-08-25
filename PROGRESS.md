@@ -22,3 +22,14 @@ Got to spend almost six hours on this today. Not much progress, but I like to
 go slowly, but steadily. I'll need to finish the disassembler, then add the
 rest of the opcodes. When that's done, I should be able to copy the disassembly
 code for use in the CPU instruction dispatcher.
+
+Day 2
+-----
+
+Added the remaining opcodes needed to disassemble the boot ROM. Made into a
+package, added command line options and added a memory controller to perform
+memory mapping. Not very elegantly structured code, but that's not important at
+this point.
+
+Will now start with an instruction dispatcher that will eventually be able to
+run the boot code.
