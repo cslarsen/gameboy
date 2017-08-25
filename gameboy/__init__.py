@@ -343,6 +343,7 @@ class Gameboy(object):
     def poke(self, address, *values):
         """Writes one or several bytes in memory."""
         assert(0 <= address <= 0xffff)
+        length = len(values)
 
         if address < 0x8000:
             self.program_rom[address:address+length] = values
