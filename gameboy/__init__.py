@@ -152,7 +152,7 @@ class CPU(object):
 
     This CPU is very similar to the Intel 8080 and the Zilog Z80.
     """
-    def __init__(self):
+    def __init__(self, memory):
         self.MHz = 4.194304
         self._flags = 0
         self.stack_pointer = 0
@@ -164,6 +164,7 @@ class CPU(object):
         self.register_E = 0
         self.register_H = 0
         self.register_L = 0
+        self.memory = memory
 
     @property
     def flags(self):
@@ -209,39 +210,58 @@ class Cartridge(object):
         self.rom = array("B", [0]*32000) if rom is None else rom
         assert(len(self.rom) >= 32000)
 
-class Gameboy(object):
-    def __init__(self, cartridge, boot_rom):
-        self.bootstrap_rom = boot_rom
-        self.cartridge = cartridge
-        self.cpu = CPU()
-        self.display = Display()
+class MemoryController(object):
+    def __init__(self, display, cartridge):
         self.ram = random_bytes(8000)
+        self.display = display
+        self.cartridge = cartridge
 
-    def __repr__(self):
-        return "<Gameboy: %d bytes boot ROM>" % len(self.bootstrap_rom)
-
-    def peek(self, address, length=1):
-        """Reads a byte in memory."""
+    def __getitem__(self, address, length=1):
+        """Reads memory bytes."""
         assert(0 <= address <= 0xffff)
 
         if address < 0x8000:
-            return self.program_rom[address:address+length]
+            return self.cartridge.rom[address:address+length]
         elif address < 0xa000:
             return self.display.ram[address-0x8000:address-0x8000+length]
         elif address < 0xc000:
             return self.ram[address-0xa000:address-0xa000+length]
 
-    def poke(self, address, *values):
+    def __setitem__(self, address, *values):
         """Writes one or several bytes in memory."""
         assert(0 <= address <= 0xffff)
         length = len(values)
 
+        for value in values:
+            assert(value <= 0xff)
+
         if address < 0x8000:
-            self.program_rom[address:address+length] = values
+            self.cartridge.rom[address:address+length] = values
         elif address < 0xa000:
             self.display.ram[address-0x8000:address-0x8000+length] = values
         elif address < 0xc000:
             self.ram[address-0xa000:address-0xa000+length] = values
+
+    def get16(self, address):
+        return self[address, 2]
+
+    def set16(self, address, value):
+        assert(value <= 0xffff)
+        values = [(value & 0xff00) >> 16, value & 0xff]
+        self[address] = values
+
+class Gameboy(object):
+    def __init__(self, cartridge, boot_rom):
+        self.bootstrap_rom = boot_rom
+        self.cartridge = cartridge
+
+        self.display = Display()
+        self.memory = MemoryController(self.display, self.cartridge)
+        self.cpu = CPU(self.memory)
+
+    def __repr__(self):
+        return "<Gameboy: %d bytes boot ROM>" % len(self.bootstrap_rom)
+
 
 def main():
     boot_file = os.path.join(os.path.dirname(__file__), "roms", "boot")
