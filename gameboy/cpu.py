@@ -184,20 +184,48 @@ class CPU(object):
         """The zero flag."""
         return (self.F & (1<<7)) >> 6
 
+    @Z_flag.setter
+    def Z_flag(self, value):
+        if not value:
+            self.F &= ~(1<<7)
+        else:
+            self.F |= 1<<7
+
     @property
     def N_flag(self):
         """The subtract flag."""
         return (self.F & (1<<6)) >> 5
+
+    @N_flag.setter
+    def N_flag(self, value):
+        if not value:
+            self.F &= ~(1<<6)
+        else:
+            self.F |= 1<<6
 
     @property
     def H_flag(self):
         """The half carry flag"""
         return (self.F & (1<<5)) >> 4
 
+    @H_flag.setter
+    def H_flag(self, value):
+        if not value:
+            self.F &= ~(1<<5)
+        else:
+            self.F |= 1<<5
+
     @property
     def C_flag(self):
         """The carry flag"""
         return (self.F & (1<<4)) >>3
+
+    @C_flag.setter
+    def C_flag(self, value):
+        if not value:
+            self.F &= ~(1<<3)
+        else:
+            self.F |= 1<<3
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
@@ -232,7 +260,7 @@ class CPU(object):
             if opcode == 0x11: # RL C
                 raise not_implemented()
             elif opcode == 0x7c: # BIT 7, H
-                zero = (self.H & (1<<6) == 0)
+                zero = not (self.H & (1<<7))
             else:
                 raise unknown_opcode()
         else:
@@ -253,7 +281,7 @@ class CPU(object):
                     cycles = cycles[1]
                 else:
                     cycles = cycles[0]
-                    self.pc += arg # performs jump
+                    self.pc += arg
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
             elif opcode == 0xe2: # LD ($ff00+C), A
@@ -271,19 +299,18 @@ class CPU(object):
 
         # Update flags after executing the instruction
         if flags is not None:
-            for shift, flag in zip((6, 5, 4, 3), flags):
+            for shift, flag in zip((7, 6, 5, 4), flags):
                 if flag == "0":
-                    pass
                     self.F &= ~(1 << shift)
                 elif flag == "1":
                     self.F |= 1<<shift
-                elif flag == "Z" and zero:
-                    self.F |= 1<<shift
-                elif flag == "H" and half_carry:
-                    self.F |= 1<<shift
-                elif flag == "N" and subtract:
-                    self.F |= 1<<shift
-                elif flag == "C" and carry:
-                    self.F |= 1<<shift
+                elif flag == "Z" and zero is not None:
+                    self.Z_flag = zero
+                elif flag == "H" and half_carry is not None:
+                    self.H_flag = half_carry
+                elif flag == "N" and subtract is not None:
+                    self.N_flag = subtract
+                elif flag == "C" and carry is not None:
+                    self.C_flag = carry
 
         self.cycles += cycles
