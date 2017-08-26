@@ -59,3 +59,7 @@ works. Hopefully I'll see some scrolling pixels!
 Got the first loop in the bood ROM to run. It tries to write into read-only
 memory at the end, though, so I have to go back and check the memory mapping
 again.
+
+Measured that the RAM-cleaning code runs in real-time with a clock-speed of
+0.6-0.7 MHz. That means I have to make the final code almost ten times faster!
+But before I make it faster, I have to make it correct.
