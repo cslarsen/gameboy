@@ -177,17 +177,29 @@ class CPU(object):
         half_carry = None
         subtract = None
 
+        def error_message(prefix):
+            message = "%s instruction %s" % (
+                    prefix,
+                    " ".join(map(lambda x: "0x%0.2x" % x, raw)))
+            if arg is not None:
+                message += " with argument %s" % format_hex(arg)
+            return message
+
+        def unknown_opcode():
+            return RuntimeError("%s\n%s" % (error_message("Unknown"),
+                self.prev_inst))
+
+        def not_implemented():
+            return NotImplementedError(error_message("Not implemented"))
+
         # Order dependency: Check for prefix first
         if raw[0] == 0xcb: # PREFIX CB
             if opcode == 0x11: # RL C
-                raise NotImplementedError(opcode)
+                raise not_implemented()
             elif opcode == 0x7c: # BIT 7, H
                 zero = (self.H & (1<<6) == 0)
             else:
-                message = "Unknown opcode 0x%0.2x" % opcode
-                if arg is not None:
-                    message += " with argument %s" % format_hex(arg)
-                raise RuntimeError("%s\n%s" % (message, self.prev_inst))
+                raise unknown_opcode()
         else:
             if opcode == 0x00: # NOP
                 pass
@@ -202,10 +214,7 @@ class CPU(object):
                 self.memory[self.HL] = self.A
                 self.HL -= 1
             else:
-                message = "Unknown opcode 0x%0.2x" % opcode
-                if arg is not None:
-                    message += " with argument %s" % format_hex(arg)
-                raise RuntimeError("%s\n%s" % (message, self.prev_inst))
+                raise unknown_opcode()
 
         # Update flags after executing the instruction
         if flags is not None:
