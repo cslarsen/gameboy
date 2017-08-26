@@ -40,3 +40,18 @@ This part will consist of reading and understanding the memory layout, the bank
 switching, how to update flags and so on. The execution of instructions is
 currently badly structured, so I'll have to do a lot by hand. When I understand
 it properly, I can abstract this further, reducing code.
+
+Day 3
+-----
+
+Continuing with the grunt work of actually implementing the instructions. Added
+the first working jump instruction. It's very easy, but takes a long time
+because I haven't structured the code very well. Maybe I'll just implement an
+instruction class so I can put the implementation right there and then. That's
+doable now that I have a rough outline of the main stages: fetching, decoding
+and executing.
+
+The memory mapping is still a mess, but will be revisited as soon as I have
+implemented enough instructions to run the boot code. Then I'll hook up a
+2D window for the display, meaning I probably have to delve into how the bus
+works. Hopefully I'll see some scrolling pixels!
