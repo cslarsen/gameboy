@@ -91,7 +91,7 @@ class MemoryController(object):
         if address <= 0xffff:
             return self.internal_work_ram, 0xc000
 
-        raise RuntimeError("Invalid memory address 0x%x" % address)
+        raise IndexError("Invalid memory address 0x%x" % address)
 
     def __getitem__(self, address):
         """Reads one byte from memory."""

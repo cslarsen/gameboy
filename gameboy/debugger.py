@@ -75,7 +75,7 @@ def debugger(gameboy):
                         raw = gameboy.memory[addr:addr+8]
                         log("%s" % " ".join(map(lambda x: format_hex(x, prefix="0x"),
                             raw)))
-                    except Exception as e:
+                    except IndexError as e:
                         log(e)
             elif command.strip() == "":
                 try:
