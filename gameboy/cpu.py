@@ -274,7 +274,9 @@ class CPU(object):
         # Order dependency: Check for prefix first
         if raw[0] == 0xcb: # PREFIX CB
             if opcode == 0x11: # RL C
-                raise not_implemented()
+                carry = (self.C & (1<<7)) >> 7
+                self.C <<= 1
+		zero = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
                 zero = not (self.H & (1<<7))
             else:
@@ -492,7 +494,9 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xf7: # RST 30H
-                raise not_implemented()
+                self.memory.set16(self.SP, self.PC)
+                self.SP -= 0x10
+                self.PC = self.memory[0x0030]
 
             elif opcode == 0xf9: # LD SP, HL
                 self.SP = self.HL
@@ -507,7 +511,9 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xff: # RST 38H
-                raise not_implemented()
+                self.memory.set16(self.SP, self.PC)
+                self.SP -= 0x10
+                self.PC = self.memory[0x0038]
             else:
                 raise unknown_opcode()
 
