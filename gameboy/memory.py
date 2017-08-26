@@ -1,75 +1,92 @@
-from util import make_randomized_array
+"""
+Contains code for handling the GameBoy memory.
+"""
+
+from util import (
+    make_randomized_array,
+    make_array,
+)
+
+class Memory(object):
+    def __init__(self, length_or_data, randomized=False, readonly=False):
+        self.readonly = readonly
+
+        if isinstance(length_or_data, int):
+            length = length_or_data
+            if randomized:
+                self.data = make_randomized_array(length)
+            else:
+                self.data = make_array([0]*length)
+        else:
+            data = length_or_data
+            self.data = make_array(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __setitem__(self, index, value):
+        if self.readonly:
+            raise RuntimeError("Attempt to write to readonly memory")
+        self.data[index] = value
 
 class MemoryController(object):
     def __init__(self, boot_rom, display, cartridge):
-        self.internal_ram = make_randomized_array(8192)
         self.display = display
         self.cartridge = cartridge
 
-        self.boot_rom = boot_rom
+        self.ram_banks = []
+        for n in range(4):
+            self.ram_banks.append(Memory(0x2000))
 
-        # Current bank at 0x0000 and out
-        self.bank = boot_rom
+        self.internal_work_ram = Memory(0x4000)
+        self.expanded_work_ram = self.ram_banks[0]
+        self.fixed_home = boot_rom
+        self.home = self.cartridge.rom_bank[1]
 
-        # 8kB switchable RAM banks
-        self.banks = [
-            make_randomized_array(8192),
-        ]
+        # Make sure memory is mirrored from the start
+        for i in range(0xc000, 0xde01):
+            self[i] = self[i+0x1000]
+
+    def _memory_map(self, address):
+        """Returns (array, offset) that correspond to the given memory mapped
+        address."""
+
+        if 0x0000 <= address < 0x4000:
+            return self.fixed_home, 0x0000
+
+        if address < 0x8000:
+            return self.home, 0x4000
+
+        if address < 0xa000:
+            return self.display.ram, 0x8000
+
+        if address < 0xc000:
+            return self.expanded_work_ram, 0xa000
+
+        if address <= 0xffff:
+            return self.internal_work_ram, 0xc000
+
+        raise RuntimeError("Invalid memory address 0x%x" % address)
 
     def __getitem__(self, address):
-        """Reads one memory byte.
-
-        Here we are accessing memory based on CPU address
-        """
-        assert(0 <= address <= 0xffff)
-
-        # e000-fe00 mirrored in c000-de00
-
-        if address < 0x4000:
-            rom = self.bank
-            return rom[address]
-        elif address < 0x8000:
-            raise NotImplementedError()
-        elif address < 0xa000:
-            return self.display.ram[address - 0x8000]
-        elif address < 0xc000:
-            ram_bank = self.banks[self.bank]
-            return ram_bank[address - 0xa000]
-        elif address < 0xe000:
-            # 8 kB
-            return self.internal_ram[address - 0xc000]
-        elif address  < 0xfe00:
-            # echo of 8 kB internal RAM
-            return self.internal_ram[address - 0xc000]
-        else:
-            # sprite attribute memory...
-            raise NotImplementedError()
+        """Reads one byte from memory."""
+        memory, offset = self._memory_map(address)
+        return memory[address - offset]
 
     def __setitem__(self, address, value):
-        """Reads one memory byte.
+        """Writes one byte to memory."""
+        memory, offset = self._memory_map(address)
+        memory[address - offset] = value
 
-        Here we are accessing memory based on CPU address
-        """
-        assert(0 <= address <= 0xffff)
+        # Mirroring of addresses
+        if 0xc000 <= address <= 0xde00:
+            memory[address + 0x1000 - offset] = value
+        elif 0xe000 <= address <= 0xfe00:
+            memory[address - 0x1000 - offset] = value
 
-        if address < 0x4000:
-            rom = self.bank
-            rom[address] = value
-        elif address < 0x8000:
-            raise NotImplementedError()
-        elif address < 0xa000:
-            self.display.ram[address - 0x8000] = value
-        elif address < 0xc000:
-            ram_bank = self.banks[self.bank]
-            ram_bank[address - 0xa000] = value
-        elif address < 0xe000:
-            # 8 kB
-            self.internal_ram[address - 0xc000] = value
-        elif address  < 0xfe00:
-            self.internal_ram[address - 0xc000] = value
-        else:
-            # sprite attribute memory...
-            raise NotImplementedError()
 
     def get16(self, address):
         # Little-endian

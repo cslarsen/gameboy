@@ -103,9 +103,6 @@ def main():
                         gameboy.cpu.step(True)
                     except Exception as e:
                         log("\n\n*** Exception: %s" % e)
-                        gameboy.cpu.print_registers()
-                        log("")
-                        raise
             sys.exit(0)
         else:
             try:

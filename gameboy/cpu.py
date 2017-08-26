@@ -220,6 +220,10 @@ class CPU(object):
                     self.pc += arg # performs jump
                 else:
                     cycles = cycles[1]
+            elif opcode == 0x3e: # LD A, d8
+                self.LD = arg
+            elif opcode == 0xe2: # LD ($ff00+C), A
+                self.memory[0xff00 + self.C] = self.A
             else:
                 raise unknown_opcode()
 
