@@ -19,7 +19,7 @@ def u8_to_signed(value):
     assert(0 <= value <= 0xff)
 
     if value > 0x7f:
-        return 0x100 - value
+        return -(0x100 - value)
     else:
         return value
 

@@ -112,10 +112,10 @@ class CPU(object):
                 arg = u8_to_signed(arg)
                 abs_addr = self.pc + bytelen + arg
                 if arg < 0:
-                    name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-arg,
+                    name = name.replace("r8", "PC-$%0.2x (@$%0.4x)" % (-arg,
                         abs_addr))
                 else:
-                    name = name.replace("r8", "PC+$%0.4x (@$%0.4x)" % (arg,
+                    name = name.replace("r8", "PC+$%0.2x (@$%0.4x)" % (arg,
                         abs_addr))
             else:
                 raise RuntimeError(

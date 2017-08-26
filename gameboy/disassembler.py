@@ -77,10 +77,10 @@ def disassemble(code, start_address=0x0000):
                 # forever. So this one may actually be the correct one.
 
                 if value < 0:
-                    name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-value,
+                    name = name.replace("r8", "PC-$%0.2x (@$%0.4x)" % (-value,
                         abs_addr))
                 else:
-                    name = name.replace("r8", "PC+$%0.4x (@$%0.4x)" %
+                    name = name.replace("r8", "PC+$%0.2x (@$%0.4x)" %
                             (value, abs_addr))
             else:
                 raise RuntimeError(
