@@ -1,3 +1,12 @@
+"""
+Implementation of the GameBoy CPU.
+
+We will start the program counter at address zero, unlike 0x0100, since we have
+a 256-byte boot ROM. After booting, it will continue executing from 0x0100.
+
+TODO: Implement bytes and registers as rollover unsigned ints.
+"""
+
 import sys
 
 from util import (
@@ -33,7 +42,7 @@ class CPU(object):
         self.L = 0
 
         # 16-bit registers
-        self.pc = 0 # and not 0x100, because we have a boot ROM
+        self.pc = 0
         self.sp = 0
 
         # Amount of cycles spent
@@ -224,6 +233,14 @@ class CPU(object):
                 self.LD = arg
             elif opcode == 0xe2: # LD ($ff00+C), A
                 self.memory[0xff00 + self.C] = self.A
+            elif opcode == 0x0c: # INC C
+                # TODO: Implement as real unsigned 8-bit type
+                self.C += 1
+                if self.C == 8:
+                    half_carry = True
+                if self.C > 0xff:
+                    self.C = 0
+                zero = (self.C == 0)
             else:
                 raise unknown_opcode()
 
