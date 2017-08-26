@@ -11,8 +11,10 @@ GameBoy at some point.
 """
 
 from util import (
-    make_randomized_array,
     make_array,
+    make_randomized_array,
+    u16_to_u8,
+    u8_to_u16,
 )
 
 class Memory(object):
@@ -119,4 +121,6 @@ class MemoryController(object):
         return u8_to_u16(self[address+1], self[address])
 
     def set16(self, address, value):
-        self[address+1:address] = u16_to_u8(value)
+        hi, lo = u16_to_u8(value)
+        self[address+1] = hi
+        self[address] = lo

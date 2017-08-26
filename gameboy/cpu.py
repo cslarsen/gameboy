@@ -323,7 +323,7 @@ class CPU(object):
                 self.A = self.L
 
             elif opcode == 0xe2: # LD ($ff00+C), A
-                self.memory[self.C] = self.A
+                self.memory[0xff00 + self.C] = self.A
 
             elif opcode == 0xe0: # LDH (a8), A
                 self.memory[arg] = self.A

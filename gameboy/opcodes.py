@@ -110,6 +110,5 @@ extended_opcodes = {
 # Opcodes whose argument should be added with 0xff00
 add_0xff00_opcodes = (
     0xe0,
-    0xe2,
     0xf0,
 )
