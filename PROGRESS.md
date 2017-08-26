@@ -63,3 +63,8 @@ again.
 Measured that the RAM-cleaning code runs in real-time with a clock-speed of
 0.6-0.7 MHz. That means I have to make the final code almost ten times faster!
 But before I make it faster, I have to make it correct.
+
+After a few hours I suddenly realized that the debugger had grown to become
+pretty decent, even though it was very rudimentary. It supports step-debugging,
+break and continue. The surprise was mostly how I now depended on a working
+Gameboy debugger.
