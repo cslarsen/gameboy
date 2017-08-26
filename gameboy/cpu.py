@@ -171,8 +171,24 @@ class CPU(object):
         self.L = value & 0xff
 
     @property
-    def z_flagged(self):
-        return self.F & (1<<6) != 0
+    def Z_flag(self):
+        """The zero flag."""
+        return (self.F & (1<<7)) >> 6
+
+    @property
+    def N_flag(self):
+        """The subtract flag."""
+        return (self.F & (1<<6)) >> 5
+
+    @property
+    def H_flag(self):
+        """The half carry flag"""
+        return (self.F & (1<<5)) >> 4
+
+    @property
+    def C_flag(self):
+        """The carry flag"""
+        return (self.F & (1<<4)) >>3
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
@@ -224,11 +240,11 @@ class CPU(object):
                 self.memory[self.HL] = self.A
                 self.HL -= 1
             elif opcode == 0x20: # JR NZ, r8
-                if not self.z_flagged:
+                if self.Z_flag:
+                    cycles = cycles[1]
+                else:
                     cycles = cycles[0]
                     self.pc += arg # performs jump
-                else:
-                    cycles = cycles[1]
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
             elif opcode == 0xe2: # LD ($ff00+C), A
@@ -248,16 +264,17 @@ class CPU(object):
         if flags is not None:
             for shift, flag in zip((6, 5, 4, 3), flags):
                 if flag == "0":
+                    pass
                     self.F &= ~(1 << shift)
                 elif flag == "1":
-                    self.F ^= 1<<shift
+                    self.F |= 1<<shift
                 elif flag == "Z" and zero:
-                    self.F ^= 1<<shift
+                    self.F |= 1<<shift
                 elif flag == "H" and half_carry:
-                    self.F ^= 1<<shift
+                    self.F |= 1<<shift
                 elif flag == "N" and subtract:
-                    self.F ^= 1<<shift
+                    self.F |= 1<<shift
                 elif flag == "C" and carry:
-                    self.F ^= 1<<shift
+                    self.F |= 1<<shift
 
         self.cycles += cycles

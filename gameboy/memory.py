@@ -37,7 +37,8 @@ class Memory(object):
 
     def __setitem__(self, index, value):
         if self.readonly:
-            raise RuntimeError("Attempt to write to readonly memory")
+            raise RuntimeError("Attempt to write to readonly memory at $%0.4x"
+                    % index)
         self.data[index] = value
 
 class MemoryController(object):
