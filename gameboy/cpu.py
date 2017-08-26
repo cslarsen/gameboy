@@ -8,6 +8,7 @@ TODO: Implement bytes and registers as rollover unsigned ints.
 """
 
 import sys
+import time
 
 from util import (
     format_bin,
@@ -47,6 +48,7 @@ class CPU(object):
 
         # Amount of cycles spent
         self.cycles = 0
+        self.start = None
 
         # Save last fully decoded instruction for errors
         self.prev_inst = ""
@@ -132,6 +134,8 @@ class CPU(object):
             self.step(trace)
 
     def step(self, trace=False):
+        if self.start is None:
+            self.start = time.time()
         address = self.pc
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
@@ -158,7 +162,12 @@ class CPU(object):
         print("        pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
-        print("        flags=%s cycles=%d" % (format_bin(self.F), self.cycles))
+        if self.start is None:
+            cps = 0
+        else:
+            cps = self.cycles / (time.time() - self.start)
+            cps /= 1000000.0
+        print("        flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F), self.cycles, cps))
 
     @property
     def HL(self):
