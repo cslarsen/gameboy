@@ -17,8 +17,9 @@ class Cartridge(object):
 
     @property
     def title(self):
-        """Title of game in upper case ascii."""
-        s = self.rom_bank[0][0x0134:0x0142].tostring().decode("ascii")
+        """Title of game in uppercase ASCII."""
+        s = self.rom_bank[0][0x0134:0x0142]
+        s = s.tostring().decode("ascii")
         s = s[:s.index("\0")]
         return s
 

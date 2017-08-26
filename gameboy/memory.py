@@ -1,5 +1,13 @@
 """
 Contains code for handling the GameBoy memory.
+
+Unlike other emulators, we randomize internal RAM on power-up, just like a real
+GameBoy. (TODO: Add a command-line flag to initialize to zero instead)
+
+The reason is that real GameBoy programs must clear out the memory, not relying
+on the RAM being zero initialized. This will then serve as a litmus test for
+non-official GameBoy programs. Good if you intend to run the program on a real
+GameBoy at some point.
 """
 
 from util import (
@@ -39,9 +47,9 @@ class MemoryController(object):
 
         self.ram_banks = []
         for n in range(4):
-            self.ram_banks.append(Memory(0x2000))
+            self.ram_banks.append(Memory(0x2000, randomized=True))
 
-        self.internal_work_ram = Memory(0x4000)
+        self.internal_work_ram = Memory(0x4000, randomized=True)
         self.expanded_work_ram = self.ram_banks[0]
         self.fixed_home = boot_rom
         self.home = self.cartridge.rom_bank[1]
