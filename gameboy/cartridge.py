@@ -7,12 +7,16 @@ class Cartridge(object):
         else:
             # Divide rom up into 16kB banks
             self.rom_bank = []
-            for n in range(16):
-                start = 0x4000*n
-                end = start + 0x4000 - 1
-                try:
+
+            length = len(rom)
+            start = 0
+            while start < length:
+                end = start + 0x4000
+                if end < length:
                     self.rom_bank.append(Memory(rom[start:end], readonly=True))
-                except IndexError:
+                    start += 0x4000
+                else:
+                    self.rom_bank.append(Memory(rom[start:], readonly=True))
                     break
 
     def __len__(self):
