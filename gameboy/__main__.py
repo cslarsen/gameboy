@@ -70,8 +70,10 @@ def main():
 
         log("Loading cartridge from %s" % os.path.relpath(opt.cartridge))
         binary = load_binary(opt.cartridge)
-        log("... %d bytes" % len(binary))
+        log("  Length: %d bytes" % len(binary))
         cartridge = Cartridge(binary)
+        log("  Title: %s" % cartridge.title)
+        log("  Type: %s" % cartridge.type)
 
         log("Booting Gameboy")
         gameboy = Gameboy(cartridge, boot)

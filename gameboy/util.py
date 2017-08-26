@@ -23,6 +23,18 @@ def u8_to_signed(value):
     else:
         return value
 
+def u16_to_u8(value):
+    """Little-endian splitting of 16-bit word to 8-bit byte.
+
+    Returns (low u8, high u8).
+    """
+    lo = value & 0xff
+    hi = (value & 0xff00) >> 8
+    return (lo, hi)
+
+def u8_to_u16(lo, hi):
+    return lo | hi << 8
+
 def format_hex(value):
     """Formats a hex value that is suitable for Gameboy disassembly."""
     sign = "" if value>=0 else "-"
