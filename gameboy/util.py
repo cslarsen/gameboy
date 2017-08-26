@@ -1,5 +1,6 @@
 import array
 import random
+import readline
 import sys
 
 def make_array(data=None):
