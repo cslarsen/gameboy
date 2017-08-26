@@ -137,7 +137,7 @@ class CPU(object):
 
     def step(self, trace=False):
         if self.start is None:
-            self.start = time.time()
+            self.start = time.clock()
         address = self.PC
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
@@ -152,24 +152,23 @@ class CPU(object):
 
         self.execute(opcode, length, cycles, flags, raw, arg)
 
-        if trace and flags is not None:
-            sys.stdout.write("\n        implicit flags: %s" % " ".join(flags))
-
         if trace:
+            if flags is not None:
+                sys.stdout.write("\nimplicit flags %s" % " ".join(flags))
             sys.stdout.write("\n")
             sys.stdout.flush()
             self.print_registers()
 
     def print_registers(self):
-        print("        pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
+        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
                 (self.PC, self.SP, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
         if self.start is None:
             cps = 0
         else:
-            cps = self.cycles / (time.time() - self.start)
+            cps = self.cycles / (time.clock() - self.start)
             cps /= 1000000.0
-        print("        flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F), self.cycles, cps))
+        print("flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F), self.cycles, cps))
 
     @property
     def HL(self):

@@ -16,14 +16,20 @@ def debugger(gameboy):
 
     continue_running = False
     breakpoints = set()
+    break_nl = False
 
     while True:
         if (not continue_running) or (gameboy.cpu.PC in
                 breakpoints):
             try:
-                if gameboy.cpu.PC in breakpoints:
-                    log("\nbreak")
-                command = wait_enter("> ").strip().lower()
+                pc = gameboy.cpu.PC
+                if break_nl and pc in breakpoints:
+                    log("")
+                    break_nl = False
+                    continue_running = False
+                prefix = "%s@$%0.4x > " % ("break " if pc in breakpoints else
+                        "", pc)
+                command = wait_enter(prefix).strip().lower()
             except EOFError:
                 break
         else:
@@ -33,6 +39,7 @@ def debugger(gameboy):
             break
         elif command.startswith("c"):
             continue_running = True
+            break_nl = True
         elif command.startswith("b"):
             for bp in command.split()[1:]:
                 if bp.startswith("0x"):
@@ -58,6 +65,7 @@ def debugger(gameboy):
             gameboy.cpu.print_registers()
         elif command.strip() == "":
             try:
+                break_nl = True
                 gameboy.cpu.step(not continue_running)
                 if continue_running:
                     sys.stdout.write("%-78s\r" % gameboy.cpu.prev_inst)
