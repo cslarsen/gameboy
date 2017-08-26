@@ -266,16 +266,9 @@ class CPU(object):
         else:
             if opcode == 0x00: # NOP
                 pass
-            elif opcode == 0x31: # LD SP, d16
-                self.sp = arg
             elif opcode == 0xaf: # XOR A
                 self.A = 0
                 zero = True
-            elif opcode == 0x21: # LD HL, d16
-                self.HL = arg
-            elif opcode == 0x32: # LD (HL-), A
-                self.memory[self.HL] = self.A
-                self.HL -= 1
             elif opcode == 0x20: # JR NZ, r8
                 if self.Z_flag:
                     cycles = cycles[1]
@@ -284,6 +277,15 @@ class CPU(object):
                     self.pc += arg
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
+            elif opcode == 0x0e: # LD C, d8
+                self.C = arg
+            elif opcode == 0x21: # LD HL, d16
+                self.HL = arg
+            elif opcode == 0x31: # LD SP, d16
+                self.sp = arg
+            elif opcode == 0x32: # LD (HL-), A
+                self.memory[self.HL] = self.A
+                self.HL -= 1
             elif opcode == 0xe2: # LD ($ff00+C), A
                 self.memory[0xff00 + self.C] = self.A
             elif opcode == 0x0c: # INC C
