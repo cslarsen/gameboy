@@ -456,16 +456,16 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xc1: # POP BC
-                self.BC = self.memory.get16(self.SP)
                 self.SP += 0x10
+                self.BC = self.memory.get16(self.SP)
 
             elif opcode == 0xc5: # PUSH BC
                 self.memory.set16(self.SP, self.BC)
                 self.SP -= 0x10
 
             elif opcode == 0xc9: # RET
-                self.PC = self.memory.get16[self.SP]
                 self.SP += 0x10
+                self.PC = self.memory.get16(self.SP)
 
             elif opcode == 0xcc: # CALL Z, a16
                 if self.Z_flag:
