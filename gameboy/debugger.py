@@ -86,6 +86,7 @@ def debugger(gameboy):
                         sys.stdout.flush()
                 except Exception as e:
                     log("\n\n*** Exception: %s" % e)
+                    continue_running = False
             elif command.startswith("l"):
                 start = gameboy.cpu.PC
                 code = gameboy.cpu.memory[start:start+16]
