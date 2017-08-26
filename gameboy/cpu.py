@@ -341,7 +341,7 @@ class CPU(object):
 
             elif opcode == 0x05: # DEC B
                 half_carry = (self.B == 16) # TODO: Fixme
-                self.B -= 1
+                self.B = (self.B - 1) % 0xff
                 zero = (self.B == 0)
 
             elif opcode == 0x06: # LD B, d8
