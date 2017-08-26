@@ -1,6 +1,7 @@
 import sys
 
 from util import (
+    format_bin,
     format_hex,
     u8_to_signed,
 )
@@ -145,9 +146,10 @@ class CPU(object):
             self.print_registers()
 
     def print_registers(self):
-        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x cycles=%d" %
+        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
-                    self.F, self.H, self.L, self.cycles))
+                    self.F, self.H, self.L))
+        print("flags=%s cycles=%d" % (format_bin(self.F), self.cycles))
 
     @property
     def HL(self):

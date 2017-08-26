@@ -35,6 +35,10 @@ def u16_to_u8(value):
 def u8_to_u16(lo, hi):
     return lo | hi << 8
 
+def format_bin(value, bits=8):
+    s = bin(value)[2:]
+    return "0"*(bits-len(s)) + s
+
 def format_hex(value):
     """Formats a hex value that is suitable for Gameboy disassembly."""
     sign = "" if value>=0 else "-"
