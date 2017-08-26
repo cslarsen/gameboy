@@ -16,8 +16,10 @@ from util import (
 )
 
 class Memory(object):
-    def __init__(self, length_or_data, randomized=False, readonly=False):
+    def __init__(self, length_or_data, randomized=False, readonly=False,
+            name=None):
         self.readonly = readonly
+        self.name = name
 
         if isinstance(length_or_data, int):
             length = length_or_data
@@ -37,22 +39,25 @@ class Memory(object):
 
     def __setitem__(self, index, value):
         if self.readonly:
-            raise RuntimeError("Attempt to write to readonly memory at $%0.4x"
-                    % index)
+            raise RuntimeError("%r: Attempt to write to readonly memory at $%0.4x"
+                    % (self.name, index))
         self.data[index] = value
 
 class MemoryController(object):
     def __init__(self, boot_rom, display, cartridge):
+        self.boot_rom = Memory(boot_rom, readonly=True, name="Nintendo boot ROM")
         self.display = display
         self.cartridge = cartridge
 
         self.ram_banks = []
         for n in range(4):
-            self.ram_banks.append(Memory(0x2000, randomized=True))
+            self.ram_banks.append(Memory(0x2000, randomized=True,
+                name="RAM bank %d" % n))
 
-        self.internal_work_ram = Memory(0x4000, randomized=True)
+        self.internal_work_ram = Memory(0x4000, randomized=True,
+                name="Internal work RAM")
         self.expanded_work_ram = self.ram_banks[0]
-        self.fixed_home = boot_rom
+        self.fixed_home = self.cartridge.rom_bank[0]
         self.home = self.cartridge.rom_bank[1]
 
         # Make sure memory is mirrored from the start
@@ -62,6 +67,12 @@ class MemoryController(object):
     def _memory_map(self, address):
         """Returns (array, offset) that correspond to the given memory mapped
         address."""
+
+        if 0x0000 <= address < 0x0100:
+            # Contains a few reserved memory locations. However, on power-up,
+            # this are will refer to the boot ROM. After boot-up, this area
+            # will be usable again.
+            return self.boot_rom, 0x0000
 
         if 0x0000 <= address < 0x4000:
             return self.fixed_home, 0x0000
@@ -83,7 +94,15 @@ class MemoryController(object):
     def __getitem__(self, address):
         """Reads one byte from memory."""
         memory, offset = self._memory_map(address)
-        return memory[address - offset]
+        if address < offset:
+            raise IndexError("%r: Adress 0x%0.4x less than offset 0x%0.4x" % (
+                memory.name, address, offset))
+        if (address - offset) < len(memory):
+            return memory[address - offset]
+        else:
+            raise IndexError(
+"%r: Invalid address=0x%0.4x - offset=0x%0.4x = 0x%0.4x, length 0x%0.4x" % (
+    memory.name, address, offset, address - offset, len(memory)))
 
     def __setitem__(self, address, value):
         """Writes one byte to memory."""

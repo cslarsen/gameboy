@@ -3,7 +3,7 @@ from util import make_randomized_array
 
 class Display(object):
     def __init__(self):
-        self.ram = Memory(0x2000, randomized=True)
+        self.ram = Memory(0x2000, randomized=True, name="Display RAM")
         self.vblank_duration = 1.1
         self.fps = 59.7
 

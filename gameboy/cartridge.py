@@ -3,7 +3,8 @@ from memory import Memory
 class Cartridge(object):
     def __init__(self, rom=None):
         if rom is None:
-            self.rom_bank = [Memory(0x4000, readonly=True)]*16
+            self.rom_bank = [Memory(0x4000, readonly=True,
+                                    name="Cartridge ROM bank")]*16
         else:
             # Divide rom up into 16kB banks
             self.rom_bank = []
@@ -13,10 +14,12 @@ class Cartridge(object):
             while start < length:
                 end = start + 0x4000
                 if end < length:
-                    self.rom_bank.append(Memory(rom[start:end], readonly=True))
+                    self.rom_bank.append(Memory(rom[start:end], readonly=True,
+                        name="Cartridge ROM bank #%d" % len(self.rom_bank)))
                     start += 0x4000
                 else:
-                    self.rom_bank.append(Memory(rom[start:], readonly=True))
+                    self.rom_bank.append(Memory(rom[start:], readonly=True,
+                        name="Cartridge ROM bank #%d" % len(self.rom_bank)))
                     break
 
     def __len__(self):
