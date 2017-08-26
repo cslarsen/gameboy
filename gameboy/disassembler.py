@@ -6,14 +6,18 @@ from __init__ import (
     u8_to_signed,
 )
 
-def disassemble(code, start_address=0x0000):
+def disassemble(code, start_address=0x0000, length=None, stream=sys.stdout):
     """Disassembles binary code."""
+    write = stream.write
     index = 0
+
+    if length is None:
+        length = len(code)
 
     # Whether the previous instruciton was the 0xcb prefix opcode
     prefix = False
 
-    while index < len(code):
+    while index < length:
         try:
             address = start_address + index
             opcode = code[index]
@@ -24,7 +28,7 @@ def disassemble(code, start_address=0x0000):
                 "prefixed " if prefix else "", int(str(e))))
 
         if not prefix:
-            sys.stdout.write("$%0.4x:  " % address)
+            write("$%0.4x:  " % address)
             raw = ""
 
         for byte in code[index:index+bytelen]:
@@ -88,17 +92,17 @@ def disassemble(code, start_address=0x0000):
                         (opcode, name, format_hex(arg)))
 
         if opcode != 0xcb:
-            sys.stdout.write("%-20s " % raw)
+            write("%-20s " % raw)
             instruction = name + instruction
-            sys.stdout.write("%-24s" % instruction)
+            write("%-24s" % instruction)
 
             if flags is not None:
                 for flag in flags:
                     assert(flag in ("Z", "N", "H", "C", "0", "1"))
-                sys.stdout.write(" flags %s" % " ".join(flags))
+                write(" flags %s" % " ".join(flags))
 
             prefix = False
-            sys.stdout.write("\n")
+            write("\n")
         else:
             prefix = True
 

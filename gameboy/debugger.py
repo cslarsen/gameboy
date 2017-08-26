@@ -1,5 +1,7 @@
 import sys
 
+from disassembler import disassemble
+
 from util import (
     format_hex,
     load_binary,
@@ -54,8 +56,7 @@ def debugger(gameboy):
             log("  - B <address> stops at PC=address")
         elif command.startswith("r"):
             gameboy.cpu.print_registers()
-        elif (command.startswith("s") or command.startswith("n") or
-                command.strip() == ""):
+        elif command.strip() == "":
             try:
                 gameboy.cpu.step(not continue_running)
                 if continue_running:
@@ -63,3 +64,12 @@ def debugger(gameboy):
                     sys.stdout.flush()
             except Exception as e:
                 log("\n\n*** Exception: %s" % e)
+        elif command.startswith("l"):
+            start = gameboy.cpu.PC
+            code = gameboy.cpu.memory[start:start+16]
+            try:
+                disassemble(code, start_address=start)
+            except IndexError:
+                log("...")
+        else:
+            log("Unknown command")
