@@ -160,7 +160,7 @@ class CPU(object):
             self.print_registers()
 
     def print_registers(self):
-        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
+        print("pc=$%0.4x sp=$%0.4x a=$%0.2x b=$%0.2x c=$%0.2x d=$%0.2x e=$%0.2x f=$%0.1x h=$%0.2x l=$%0.2x" %
                 (self.PC, self.SP, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
         if self.start is None:
