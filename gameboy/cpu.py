@@ -7,6 +7,7 @@ from util import (
 
 from opcodes import (
     add_0xff00_opcodes,
+    extended_opcodes,
     opcodes,
 )
 
@@ -62,8 +63,17 @@ class CPU(object):
 
     def decode(self, opcode):
         # Decode opcode
-        name, bytelen, cycles, flags = opcodes[int(opcode)]
+        name, bytelen, cycles, flags = opcodes[opcode]
         raw = [opcode]
+
+        if opcode == 0xcb: # PREFIX CB
+            # Fetch the next instruction as well
+            self.pc += bytelen
+            opcode = self.fetch()
+            raw.append(opcode)
+
+            name, bytelen, xcycles, flags = extended_opcodes[opcode]
+            cycles += xcycles
 
         # Decode arguments
         arg = None
@@ -105,7 +115,7 @@ class CPU(object):
         # TODO: Handle extended opcodes
 
         self.pc += bytelen
-        return name, bytelen, cycles, flags, arg, raw
+        return name, opcode, bytelen, cycles, flags, arg, raw
 
     def run(self, trace=False):
         while True:
@@ -114,17 +124,17 @@ class CPU(object):
     def step(self, trace=False):
         address = self.pc
         opcode = self.fetch()
-        instruction, length, cycles, flags, arg, raw = self.decode(opcode)
+        name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
 
         self.prev_inst = "$%0.4x:" % address
         self.prev_inst += "  %-20s" % " ".join(map(lambda x: "0x%0.2x" % x,
             raw))
-        self.prev_inst += "  %-20s" % instruction
+        self.prev_inst += "  %-20s" % name
 
         if trace:
             sys.stdout.write(self.prev_inst)
 
-        self.execute(opcode, length, cycles, flags, arg)
+        self.execute(opcode, length, cycles, flags, raw, arg)
 
         if trace and flags is not None:
             sys.stdout.write("\nimplicit flags: %s" % " ".join(flags))
@@ -149,7 +159,10 @@ class CPU(object):
         self.H = (value & 0xff00) >> 8
         self.L = value & 0xff
 
-    def execute(self, opcode, length, cycles, flags, arg=None):
+    def set_z_flag(self, flag):
+        pass
+
+    def execute(self, opcode, length, cycles, flags, raw, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
         # and much more elegantly
         if length == 1:
@@ -162,39 +175,51 @@ class CPU(object):
         half_carry = None
         subtract = None
 
-        if opcode == 0x00: # NOP
-            pass
-        elif opcode == 0x31: # LD SP, d16
-            self.sp = arg
-        elif opcode == 0xaf: # XOR A
-            self.A = 0
-            zero = True
-        elif opcode == 0x21: # LD HL, d16
-            self.HL = arg
-        elif opcode == 0x32: # LD (HL-), A
-            self.memory[self.HL] = self.A
-            self.HL -= 1
+        # Order dependency: Check for prefix first
+        if raw[0] == 0xcb: # PREFIX CB
+            if opcode == 0x11: # RL C
+                raise NotImplementedError(opcode)
+            elif opcode == 0x7c: # BIT 7, H
+                zero = (self.H & (1<<6) == 0)
+            else:
+                message = "Unknown opcode 0x%0.2x" % opcode
+                if arg is not None:
+                    message += " with argument %s" % format_hex(arg)
+                raise RuntimeError("%s\n%s" % (message, self.prev_inst))
         else:
-            message = "Unknown opcode 0x%0.2x" % opcode
-            if arg is not None:
-                message += " with argument %s" % format_hex(arg)
-            raise RuntimeError("%s\n%s" % (message, self.prev_inst))
+            if opcode == 0x00: # NOP
+                pass
+            elif opcode == 0x31: # LD SP, d16
+                self.sp = arg
+            elif opcode == 0xaf: # XOR A
+                self.A = 0
+                zero = True
+            elif opcode == 0x21: # LD HL, d16
+                self.HL = arg
+            elif opcode == 0x32: # LD (HL-), A
+                self.memory[self.HL] = self.A
+                self.HL -= 1
+            else:
+                message = "Unknown opcode 0x%0.2x" % opcode
+                if arg is not None:
+                    message += " with argument %s" % format_hex(arg)
+                raise RuntimeError("%s\n%s" % (message, self.prev_inst))
 
         # Update flags after executing the instruction
         if flags is not None:
-            for bit, flag in zip((7, 6, 5, 4), flags):
+            for shift, flag in zip((6, 5, 4, 3), flags):
                 if flag == "0":
-                    self.F &= ~(1 << bit)
+                    self.F &= ~(1 << shift)
                 elif flag == "1":
-                    self.F ^= 1<<bit
+                    self.F ^= 1<<shift
                 elif flag == "Z" and zero:
-                    self.F ^= 1<<bit
+                    self.F ^= 1<<shift
                 elif flag == "H" and half_carry:
-                    self.F ^= 1<<bit
+                    self.F ^= 1<<shift
                 elif flag == "N" and subtract:
-                    self.F ^= 1<<bit
+                    self.F ^= 1<<shift
                 elif flag == "C" and carry:
-                    self.F ^= 1<<bit
+                    self.F ^= 1<<shift
 
         # Update cycles for non-branching ops only
         if isinstance(cycles, int):
