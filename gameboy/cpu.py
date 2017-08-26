@@ -275,7 +275,7 @@ class CPU(object):
         if raw[0] == 0xcb: # PREFIX CB
             if opcode == 0x11: # RL C
                 carry = (self.C & (1<<7)) >> 7
-                self.C <<= 1
+                self.C = (self.C << 1) % 0xff
 		zero = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
                 zero = not (self.H & (1<<7))
@@ -340,7 +340,9 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0x05: # DEC B
-                raise not_implemented()
+                half_carry = (self.B == 16) # TODO: Fixme
+                self.B -= 1
+                zero = (self.B == 0)
 
             elif opcode == 0x06: # LD B, d8
                 self.B = arg
@@ -382,7 +384,9 @@ class CPU(object):
                 self.D = arg
 
             elif opcode == 0x17: # RLA
-                raise not_implemented()
+                carry = (self.A & (1<<7)) >> 7
+                self.A = (self.A << 1) % 0xff
+		zero = (self.A == 0)
 
             elif opcode == 0x18: # JR r8
                 self.PC = arg
