@@ -138,7 +138,7 @@ class CPU(object):
         self.execute(opcode, length, cycles, flags, raw, arg)
 
         if trace and flags is not None:
-            sys.stdout.write("\nimplicit flags: %s" % " ".join(flags))
+            sys.stdout.write("\n        implicit flags: %s" % " ".join(flags))
 
         if trace:
             sys.stdout.write("\n")
@@ -146,10 +146,10 @@ class CPU(object):
             self.print_registers()
 
     def print_registers(self):
-        print("pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
+        print("        pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
                 (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
-        print("flags=%s cycles=%d" % (format_bin(self.F), self.cycles))
+        print("        flags=%s cycles=%d" % (format_bin(self.F), self.cycles))
 
     @property
     def HL(self):
