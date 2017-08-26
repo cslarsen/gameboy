@@ -1,13 +1,18 @@
 import sys
 
 from disassembler import disassemble
-
 from util import (
     format_hex,
     load_binary,
     log,
     wait_enter,
 )
+
+def parse_number(s):
+    if s.startswith("0x"):
+        return int(s, 16)
+    else:
+        return int(s)
 
 def debugger(gameboy):
     log("\nType CTRL+D or Q to quit, H for help.")
@@ -43,11 +48,7 @@ def debugger(gameboy):
                 break_nl = True
             elif command.startswith("b"):
                 for bp in command.split()[1:]:
-                    if bp.startswith("0x"):
-                        bp = int(bp, 16)
-                    else:
-                        bp = int(bp)
-                    breakpoints.add(bp)
+                    breakpoints.add(parse_number(bp))
 
                 if len(breakpoints) == 0:
                     log("No breakpoints")
@@ -69,11 +70,7 @@ def debugger(gameboy):
             elif command.startswith("m"):
                 addr = command.split()
                 if len(addr) > 1:
-                    addr = addr[1]
-                    if addr.startswith("0x"):
-                        addr = int(addr, 16)
-                    else:
-                        addr = int(addr)
+                    addr = parse_number(addr[1])
                     try:
                         raw = gameboy.memory[addr:addr+8]
                         log("%s" % " ".join(map(lambda x: format_hex(x, prefix="0x"),
