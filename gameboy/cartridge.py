@@ -15,11 +15,18 @@ class Cartridge(object):
                 except IndexError:
                     break
 
+    def __len__(self):
+        return sum(map(len, self.rom_bank))
+
+    def __repr__(self):
+        return "<Cartridge: title=%r type=%r bytes=0x%x>" % (
+                self.title, self.type, len(self))
+
     @property
     def title(self):
         """Title of game in uppercase ASCII."""
         s = self.rom_bank[0][0x0134:0x0142]
-        s = s.tostring().decode("ascii")
+        s = str(s.tostring().decode("ascii"))
         s = s[:s.index("\0")]
         return s
 
