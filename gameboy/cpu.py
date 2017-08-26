@@ -426,7 +426,9 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0x3d: # DEC A
-                raise not_implemented()
+                self.A = (self.A - 1) % 0xff
+                zero = (self.A == 0)
+                # TODO: set half_carry flag
 
             elif opcode == 0x42: # LD B, D
                 self.B = self.D
