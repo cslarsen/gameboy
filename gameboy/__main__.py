@@ -111,7 +111,7 @@ def main():
             try:
                 gameboy.cpu.run(trace=opt.trace)
             except Exception as e:
-                log("\n*** Exception: %s" % e)
+                log("\n\n*** Exception: %s" % e)
                 gameboy.cpu.print_registers()
                 log("")
                 raise
