@@ -511,7 +511,10 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xfe: # CP d8
-                raise not_implemented()
+                result = self.A - arg
+                zero = (result == 0)
+                carry = (self.A < arg)
+                # TODO: set half_carry
 
             elif opcode == 0xff: # RST 38H
                 self.memory.set16(self.SP, self.PC)
