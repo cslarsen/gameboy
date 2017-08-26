@@ -96,11 +96,8 @@ class MemoryController(object):
         elif 0xe000 <= address <= 0xfe00:
             memory[address - 0x1000 - offset] = value
 
-
     def get16(self, address):
-        # Little-endian
-        return u8_to_u16(self[address], self[address+1])
+        return u8_to_u16(self[address+1], self[address])
 
     def set16(self, address, value):
-        # Little-endian
-        self[address:address+1] = u16_to_u8(value)
+        self[address+1:address] = u16_to_u8(value)

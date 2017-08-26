@@ -13,7 +13,9 @@ import time
 from util import (
     format_bin,
     format_hex,
+    u16_to_u8,
     u8_to_signed,
+    u8_to_u16,
 )
 
 from opcodes import (
@@ -43,8 +45,8 @@ class CPU(object):
         self.L = 0
 
         # 16-bit registers
-        self.pc = 0
-        self.sp = 0
+        self.PC = 0
+        self.SP = 0
 
         # Amount of cycles spent
         self.cycles = 0
@@ -70,7 +72,7 @@ class CPU(object):
         return (self.flags & 4) != 0
 
     def fetch(self):
-        opcode = self.memory[self.pc]
+        opcode = self.memory[self.PC]
         return opcode
 
     def decode(self, opcode):
@@ -80,7 +82,7 @@ class CPU(object):
 
         if opcode == 0xcb: # PREFIX CB
             # Fetch the next instruction as well
-            self.pc += bytelen
+            self.PC += bytelen
             opcode = self.fetch()
             raw.append(opcode)
 
@@ -92,7 +94,7 @@ class CPU(object):
         if bytelen > 1:
             arg = 0
             for offset in range(1, bytelen):
-                byte = self.memory[self.pc + offset]
+                byte = self.memory[self.PC + offset]
                 raw.append(byte)
                 arg |= byte << 8*(offset-1)
 
@@ -112,7 +114,7 @@ class CPU(object):
             elif "r8" in name:
                 # 8-bit signed data, which are added to program counter
                 arg = u8_to_signed(arg)
-                abs_addr = self.pc + bytelen + arg
+                abs_addr = self.PC + bytelen + arg
                 if arg < 0:
                     name = name.replace("r8", "PC-$%0.2x (@$%0.4x)" % (-arg,
                         abs_addr))
@@ -126,7 +128,7 @@ class CPU(object):
 
         # TODO: Handle extended opcodes
 
-        self.pc += bytelen
+        self.PC += bytelen
         return name, opcode, bytelen, cycles, flags, arg, raw
 
     def run(self, trace=False):
@@ -136,7 +138,7 @@ class CPU(object):
     def step(self, trace=False):
         if self.start is None:
             self.start = time.time()
-        address = self.pc
+        address = self.PC
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
 
@@ -160,7 +162,7 @@ class CPU(object):
 
     def print_registers(self):
         print("        pc=$%0.4x sp=$%0.4x a=$%x b=$%x c=$%x d=$%x e=$%x f=$%x h=$%x l=$%x" %
-                (self.pc, self.sp, self.A, self.B, self.C, self.D, self.E,
+                (self.PC, self.SP, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
         if self.start is None:
             cps = 0
@@ -171,13 +173,11 @@ class CPU(object):
 
     @property
     def HL(self):
-        return self.H << 8 | self.L
+        return u8_to_u16(self.H, self.L)
 
     @HL.setter
     def HL(self, value):
-        assert(0 <= value <= 0xffff)
-        self.H = (value & 0xff00) >> 8
-        self.L = value & 0xff
+        self.H, self.L = u16_to_u8(value)
 
     @property
     def Z_flag(self):
@@ -274,20 +274,46 @@ class CPU(object):
                     cycles = cycles[1]
                 else:
                     cycles = cycles[0]
-                    self.pc += arg
+                    self.PC += arg
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
-            elif opcode == 0x0e: # LD C, d8
-                self.C = arg
             elif opcode == 0x21: # LD HL, d16
                 self.HL = arg
             elif opcode == 0x31: # LD SP, d16
-                self.sp = arg
+                self.SP = arg
             elif opcode == 0x32: # LD (HL-), A
                 self.memory[self.HL] = self.A
                 self.HL -= 1
+            elif opcode == 0x77: # LD (HL), A
+                self.memory[self.HL] = self.A
+            elif opcode == 0x78: # LD A, B
+                self.A = self.B
+            elif opcode == 0x7b: # LD A, E
+                self.A = self.E
+            elif opcode == 0x7c: # LD A, H
+                self.A = self.H
+            elif opcode == 0x7d: # LD A, L
+                self.A = self.L
             elif opcode == 0xe2: # LD ($ff00+C), A
-                self.memory[0xff00 + self.C] = self.A
+                self.memory[self.C] = self.A
+            elif opcode == 0xe0: # LDH (a8), A
+                self.memory[arg] = self.A
+            elif opcode == 0x01: # LD BC, d16
+                self.BC = arg
+            elif opcode == 0x02: # LD (BC), A
+                self.memory[self.BC] = self.A
+            elif opcode == 0x02:
+                self.BC += 1
+            elif opcode == 0x04:
+                raise not_implemented()
+            elif opcode == 0x05:
+                raise not_implemented()
+            elif opcode == 0x06:
+                self.B = arg
+            elif opcode == 0x08:
+                self.memory[arg] = self.SP
+            elif opcode == 0x0b:
+                self.BC -= 1
             elif opcode == 0x0c: # INC C
                 # TODO: Implement as real unsigned 8-bit type
                 self.C += 1
@@ -296,6 +322,112 @@ class CPU(object):
                 if self.C > 0xff:
                     self.C = 0
                 zero = (self.C == 0)
+            elif opcode == 0x0d:
+                raise not_implemented()
+            elif opcode == 0x0e: # LD C, d8
+                self.C = arg
+            elif opcode == 0x10:
+                raise not_implemented()
+            elif opcode == 0x11: # LD DE, d16
+                self.DE = arg
+            elif opcode == 0x13: # INC DE
+                self.DE += 1
+            elif opcode == 0x15: # DEC D
+                raise not_implemented()
+            elif opcode == 0x16: # LD D, d8
+                self.D = arg
+            elif opcode == 0x17: # RLA
+                raise not_implemented()
+            elif opcode == 0x18:
+                raise not_implemented()
+            elif opcode == 0x1a: # LD A, (DE)
+                self.A = self.memory[self.DE]
+            elif opcode == 0x1d: # DEC E
+                raise not_implemented()
+            elif opcode == 0x1e: # LD E, d8
+                self.E = arg
+            elif opcode == 0x22: # LD (HL+), A
+                self.memory[self.HL] = self.A
+                self.HL += 1
+            elif opcode == 0x23: # INC HL
+                self.HL += 1
+            elif opcode == 0x24: # INC H
+                raise not_implemented()
+            elif opcode == 0x28: # JR Z, r8
+                if self.Z_flag:
+                    cycles = cycles[0]
+                    self.PC += arg
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0x2e: # LD L, d8
+                self.L = arg
+            elif opcode == 0x33: # INC SP
+                self.SP += 1
+            elif opcode == 0x3c: # INC A
+                raise not_implemented()
+            elif opcode == 0x3d: # DEC A
+                raise not_implemented()
+            elif opcode == 0x42:
+                self.B = self.D
+            elif opcode == 0x4f: # LD C, A
+                self.C = self.A
+            elif opcode == 0x57: # LD D, A
+                self.D = self.A
+            elif opcode == 0x63: # LD H, E
+                self.H = self.E
+            elif opcode == 0x66: # LD H, (HL)
+                self.H = self.memory[self.HL]
+            elif opcode == 0x67: # LD H, A
+                self.H = self.A
+            elif opcode == 0x6e: # LD L, (HL)
+                self.L = self.memory[self.HL]
+            elif opcode == 0x73: # LD (HL), E
+                self.memory[self.HL] = self.E
+            elif opcode == 0x76: # HALT
+                raise not_implemented()
+            elif opcode == 0xc1: # POP BC
+                self.BC = self.memory[self.SP]
+                self.SP += 0x10 # grows down
+            elif opcode == 0xc5: # PUSH BC
+                self.memory[self.SP] = self.BC
+                self.SP -= 0x10 # grows down
+            elif opcode == 0xc9: # RET
+                self.PC = self.memory[self.SP]
+                self.SP += 0x10
+            elif opcode == 0xcc: # CALL Z, a16
+                if self.Z_flag:
+                    self.memory[self.SP] = self.PC
+                    self.SP -= 0x10
+                    self.PC = arg
+                    cycles = cycles[0]
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0xcd: # CALL a16
+                self.memory[self.SP] = self.PC
+                self.SP -= 0x10
+                self.PC = arg
+            elif opcode == 0xce: # ADD A, d8
+                raise not_implemented()
+            elif opcode == 0xd9: # RETI
+                raise not_implemented()
+            elif opcode == 0xea: # LD (a16), A
+                self.memory[arg] = self.A
+            elif opcode == 0xf0: # LDH A, (a8)
+                self.A = self.memory[arg]
+            elif opcode == 0xf3: # DI
+                raise not_implemented()
+            elif opcode == 0xf7: # RST 30H
+                raise not_implemented()
+            elif opcode == 0xf9: # LD SP, HL
+                self.SP = self.HL
+            elif opcode == 0xfa: # LD A, (a16)
+                self.A = self.memory[arg]
+            elif opcode == 0xfb: # EI
+                raise not_implemented()
+            elif opcode == 0xfe: # CP d8
+                raise not_implemented()
+            elif opcode == 0xff: # RST 38H
+                raise not_implemented()
             else:
                 raise unknown_opcode()
 

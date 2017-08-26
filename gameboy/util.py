@@ -26,14 +26,17 @@ def u8_to_signed(value):
 def u16_to_u8(value):
     """Little-endian splitting of 16-bit word to 8-bit byte.
 
-    Returns (low u8, high u8).
+    Returns (high u8, low u8).
     """
+    assert(0 <= value <= 0xffff)
     lo = value & 0xff
     hi = (value & 0xff00) >> 8
-    return (lo, hi)
+    return (hi, lo)
 
-def u8_to_u16(lo, hi):
-    return lo | hi << 8
+def u8_to_u16(hi, lo):
+    assert(0 <= lo <= 0xff)
+    assert(0 <= hi <= 0xff)
+    return hi << 8 | lo
 
 def format_bin(value, bits=8):
     s = bin(value)[2:]
