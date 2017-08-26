@@ -61,8 +61,24 @@ def debugger(gameboy):
             log("  - R to print registers")
             log("  - C to continue")
             log("  - B <address> stops at PC=address")
+            log("  - M <address> shows eight bytes from memory")
+            log("All numbers can be entered as decimal or 0x00 hex")
         elif command.startswith("r"):
             gameboy.cpu.print_registers()
+        elif command.startswith("m"):
+            addr = command.split()
+            if len(addr) > 1:
+                addr = addr[1]
+                if addr.startswith("0x"):
+                    addr = int(addr, 16)
+                else:
+                    addr = int(addr)
+                try:
+                    raw = gameboy.memory[addr:addr+8]
+                    log("%s" % " ".join(map(lambda x: format_hex(x, prefix="0x"),
+                        raw)))
+                except Exception as e:
+                    log(e)
         elif command.strip() == "":
             try:
                 break_nl = True

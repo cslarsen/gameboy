@@ -42,13 +42,13 @@ def format_bin(value, bits=8):
     s = bin(value)[2:]
     return "0"*(bits-len(s)) + s
 
-def format_hex(value):
+def format_hex(value, prefix="$"):
     """Formats a hex value that is suitable for Gameboy disassembly."""
     sign = "" if value>=0 else "-"
     if abs(value) <= 0xff:
-        return "%s$%0.2x" % (sign, abs(value))
+        return "%s%s%0.2x" % (sign, prefix, abs(value))
     else:
-        return "%s$%0.4x" % (sign, abs(value))
+        return "%s%s%0.4x" % (sign, prefix, abs(value))
 
 def make_randomized_array(length):
     """Creates an array filled with random 8-bit unsigned bytes."""
