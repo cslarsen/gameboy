@@ -19,81 +19,86 @@ def debugger(gameboy):
     break_nl = False
 
     while True:
-        if (not continue_running) or (gameboy.cpu.PC in
-                breakpoints):
-            try:
-                pc = gameboy.cpu.PC
-                if break_nl and pc in breakpoints:
-                    log("")
-                    break_nl = False
-                    continue_running = False
-                prefix = "%s@$%0.4x > " % ("break " if pc in breakpoints else
-                        "", pc)
-                command = wait_enter(prefix).strip().lower()
-            except EOFError:
-                break
-        else:
-            command = ""
-
-        if command.startswith("q"):
-            break
-        elif command.startswith("c"):
-            continue_running = True
-            break_nl = True
-        elif command.startswith("b"):
-            for bp in command.split()[1:]:
-                if bp.startswith("0x"):
-                    bp = int(bp, 16)
-                else:
-                    bp = int(bp)
-                breakpoints.add(bp)
-
-            if len(breakpoints) == 0:
-                log("No breakpoints")
-            else:
-                log("Breakpoints: ")
-                for bp in sorted(breakpoints):
-                    log("  + $%0.4x" % bp)
-        elif command.startswith("h"):
-            log("Commands:")
-            log("  - Enter for next instruction")
-            log("  - Q or CTRL+D quit")
-            log("  - R to print registers")
-            log("  - C to continue")
-            log("  - B <address> stops at PC=address")
-            log("  - M <address> shows eight bytes from memory")
-            log("All numbers can be entered as decimal or 0x00 hex")
-        elif command.startswith("r"):
-            gameboy.cpu.print_registers()
-        elif command.startswith("m"):
-            addr = command.split()
-            if len(addr) > 1:
-                addr = addr[1]
-                if addr.startswith("0x"):
-                    addr = int(addr, 16)
-                else:
-                    addr = int(addr)
+        try:
+            if (not continue_running) or (gameboy.cpu.PC in
+                    breakpoints):
                 try:
-                    raw = gameboy.memory[addr:addr+8]
-                    log("%s" % " ".join(map(lambda x: format_hex(x, prefix="0x"),
-                        raw)))
-                except Exception as e:
-                    log(e)
-        elif command.strip() == "":
-            try:
+                    pc = gameboy.cpu.PC
+                    if break_nl and pc in breakpoints:
+                        log("")
+                        break_nl = False
+                        continue_running = False
+                    prefix = "%s@$%0.4x > " % ("break " if pc in breakpoints else
+                            "", pc)
+                    command = wait_enter(prefix).strip().lower()
+                except EOFError:
+                    break
+            else:
+                command = ""
+
+            if command.startswith("q"):
+                break
+            elif command.startswith("c"):
+                continue_running = True
                 break_nl = True
-                gameboy.cpu.step(not continue_running)
-                if continue_running:
-                    sys.stdout.write("%-78s\r" % gameboy.cpu.prev_inst)
-                    sys.stdout.flush()
-            except Exception as e:
-                log("\n\n*** Exception: %s" % e)
-        elif command.startswith("l"):
-            start = gameboy.cpu.PC
-            code = gameboy.cpu.memory[start:start+16]
-            try:
-                disassemble(code, start_address=start)
-            except IndexError:
-                log("...")
-        else:
-            log("Unknown command")
+            elif command.startswith("b"):
+                for bp in command.split()[1:]:
+                    if bp.startswith("0x"):
+                        bp = int(bp, 16)
+                    else:
+                        bp = int(bp)
+                    breakpoints.add(bp)
+
+                if len(breakpoints) == 0:
+                    log("No breakpoints")
+                else:
+                    log("Breakpoints: ")
+                    for bp in sorted(breakpoints):
+                        log("  + $%0.4x" % bp)
+            elif command.startswith("h"):
+                log("Commands:")
+                log("  - Enter for next instruction")
+                log("  - Q or CTRL+D quit")
+                log("  - R to print registers")
+                log("  - C to continue")
+                log("  - B <address> stops at PC=address")
+                log("  - M <address> shows eight bytes from memory")
+                log("All numbers can be entered as decimal or 0x00 hex")
+            elif command.startswith("r"):
+                gameboy.cpu.print_registers()
+            elif command.startswith("m"):
+                addr = command.split()
+                if len(addr) > 1:
+                    addr = addr[1]
+                    if addr.startswith("0x"):
+                        addr = int(addr, 16)
+                    else:
+                        addr = int(addr)
+                    try:
+                        raw = gameboy.memory[addr:addr+8]
+                        log("%s" % " ".join(map(lambda x: format_hex(x, prefix="0x"),
+                            raw)))
+                    except Exception as e:
+                        log(e)
+            elif command.strip() == "":
+                try:
+                    break_nl = True
+                    gameboy.cpu.step(not continue_running)
+                    if continue_running:
+                        sys.stdout.write("%-78s\r" % gameboy.cpu.prev_inst)
+                        sys.stdout.flush()
+                except Exception as e:
+                    log("\n\n*** Exception: %s" % e)
+            elif command.startswith("l"):
+                start = gameboy.cpu.PC
+                code = gameboy.cpu.memory[start:start+16]
+                try:
+                    disassemble(code, start_address=start)
+                except IndexError:
+                    log("...")
+            else:
+                log("Unknown command")
+        except KeyboardInterrupt:
+            log("")
+            break_nl = False
+            continue_running = False
