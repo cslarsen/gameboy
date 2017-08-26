@@ -55,3 +55,7 @@ The memory mapping is still a mess, but will be revisited as soon as I have
 implemented enough instructions to run the boot code. Then I'll hook up a
 2D window for the display, meaning I probably have to delve into how the bus
 works. Hopefully I'll see some scrolling pixels!
+
+Got the first loop in the bood ROM to run. It tries to write into read-only
+memory at the end, though, so I have to go back and check the memory mapping
+again.
