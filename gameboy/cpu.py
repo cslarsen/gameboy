@@ -100,13 +100,13 @@ class CPU(object):
                 name = name.replace("a16", "addr $%0.4x" % arg)
             elif "r8" in name:
                 # 8-bit signed data, which are added to program counter
-                value = u8_to_signed(arg)
-                abs_addr = self.pc + bytelen + value
-                if value < 0:
-                    name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-value,
+                arg = u8_to_signed(arg)
+                abs_addr = self.pc + bytelen + arg
+                if arg < 0:
+                    name = name.replace("r8", "PC-$%0.4x (@$%0.4x)" % (-arg,
                         abs_addr))
                 else:
-                    name = name.replace("r8", "PC+$%0.4x (@$%0.4x)" % (value,
+                    name = name.replace("r8", "PC+$%0.4x (@$%0.4x)" % (arg,
                         abs_addr))
             else:
                 raise RuntimeError(
@@ -161,8 +161,9 @@ class CPU(object):
         self.H = (value & 0xff00) >> 8
         self.L = value & 0xff
 
-    def set_z_flag(self, flag):
-        pass
+    @property
+    def z_flagged(self):
+        return self.F & (1<<6) != 0
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
@@ -213,6 +214,12 @@ class CPU(object):
             elif opcode == 0x32: # LD (HL-), A
                 self.memory[self.HL] = self.A
                 self.HL -= 1
+            elif opcode == 0x20: # JR NZ, r8
+                if not self.z_flagged:
+                    cycles = cycles[0]
+                    self.pc += arg # performs jump
+                else:
+                    cycles = cycles[1]
             else:
                 raise unknown_opcode()
 
@@ -232,6 +239,4 @@ class CPU(object):
                 elif flag == "C" and carry:
                     self.F ^= 1<<shift
 
-        # Update cycles for non-branching ops only
-        if isinstance(cycles, int):
-            self.cycles += cycles
+        self.cycles += cycles
