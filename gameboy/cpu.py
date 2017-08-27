@@ -293,7 +293,7 @@ class CPU(object):
                     cycles = cycles[1]
                 else:
                     cycles = cycles[0]
-                    self.PC += arg
+                    self.PC = (self.PC + arg) % 0xffff
 
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
@@ -306,7 +306,7 @@ class CPU(object):
 
             elif opcode == 0x32: # LD (HL-), A
                 self.memory[self.HL] = self.A
-                self.HL -= 1
+                self.HL = (self.HL - 1) % 0xffff
 
             elif opcode == 0x77: # LD (HL), A
                 self.memory[self.HL] = self.A
@@ -324,7 +324,7 @@ class CPU(object):
                 self.A = self.L
 
             elif opcode == 0xe2: # LD ($ff00+C), A
-                self.memory[0xff00 + self.C] = self.A
+                self.memory[(0xff00 + self.C) % 0xffff] = self.A
 
             elif opcode == 0xe0: # LDH (a8), A
                 self.memory[arg] = self.A
@@ -337,11 +337,8 @@ class CPU(object):
 
             elif opcode == 0x04: # INC B
                 self.B = (self.B + 1) % 0xff
-                if self.B == 8:
-                    half_carry = True
-                if self.B > 0xff:
-                    self.B = 0
                 zero = (self.B == 0)
+                # TODO: Set half carry
 
             elif opcode == 0x05: # DEC B
                 self.B = (self.B - 1) % 0xff
@@ -355,15 +352,12 @@ class CPU(object):
                 self.memory.set16(arg, self.SP)
 
             elif opcode == 0x0b: # DEC BC
-                self.BC -= 1
+                self.BC = (self.BC - 1) % 0xffff
 
             elif opcode == 0x0c: # INC C
                 self.C = (self.C + 1) % 0xff
-                if self.C == 8:
-                    half_carry = True
-                if self.C > 0xff:
-                    self.C = 0
                 zero = (self.C == 0)
+                # TODO: Set half carry
 
             elif opcode == 0x0d: # DEC C
                 self.C = (self.C - 1) % 0xff
@@ -380,7 +374,7 @@ class CPU(object):
                 self.DE = arg
 
             elif opcode == 0x13: # INC DE
-                self.DE += 1
+                self.DE = (self.DE + 1) % 0xffff
 
             elif opcode == 0x15: # DEC D
                 self.D = (self.D - 1) % 0xff
@@ -411,15 +405,15 @@ class CPU(object):
 
             elif opcode == 0x22: # LD (HL+), A
                 self.memory[self.HL] = self.A
-                self.HL += 1
+                self.HL = (self.HL + 1) % 0xffff
 
             elif opcode == 0x23: # INC HL
-                self.HL += 1
+                self.HL = (self.HL + 1) % 0xffff
 
             elif opcode == 0x24: # INC H
                 self.H = (self.H + 1) % 0xff
-                # TODO: Set half carry
                 zero = (self.H == 0)
+                # TODO: Set half carry
 
             elif opcode == 0x28: # JR Z, r8
                 if self.Z_flag:
@@ -433,8 +427,8 @@ class CPU(object):
 
             elif opcode == 0x33: # INC SP
                 self.SP = (self.SP + 1) % 0xffff
-                # TODO: Set half_carry flag
                 zero = (self.SP == 0)
+                # TODO: Set half_carry flag
 
             elif opcode == 0x3c: # INC A
                 self.A = (self.A + 1) % 0xff
@@ -474,21 +468,21 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xc1: # POP BC
-                self.SP += 0x10
+                self.SP = (self.SP + 0x10) % 0xffff
                 self.BC = self.memory.get16(self.SP)
 
             elif opcode == 0xc5: # PUSH BC
                 self.memory.set16(self.SP, self.BC)
-                self.SP -= 0x10
+                self.SP = (self.SP - 0x10) % 0xffff
 
             elif opcode == 0xc9: # RET
-                self.SP += 0x10
+                self.SP = (self.SP + 0x10) % 0xffff
                 self.PC = self.memory.get16(self.SP)
 
             elif opcode == 0xcc: # CALL Z, a16
                 if self.Z_flag:
                     self.memory.set16(self.SP, self.PC)
-                    self.SP -= 0x10
+                    self.SP = (self.SP - 0x10) % 0xffff
                     self.PC = arg
                     cycles = cycles[0]
                 else:
@@ -496,7 +490,7 @@ class CPU(object):
 
             elif opcode == 0xcd: # CALL a16
                 self.memory.set16(self.SP, self.PC)
-                self.SP -= 0x10
+                self.SP = (self.SP - 0x10) % 0xffff
                 self.PC = arg
 
             elif opcode == 0xce: # ADD A, d8
@@ -516,7 +510,7 @@ class CPU(object):
 
             elif opcode == 0xf7: # RST 30H
                 self.memory.set16(self.SP, self.PC)
-                self.SP -= 0x10
+                self.SP = (self.SP - 0x10) % 0xffff
                 self.PC = self.memory[0x0030]
 
             elif opcode == 0xf9: # LD SP, HL
@@ -529,14 +523,14 @@ class CPU(object):
                 raise not_implemented()
 
             elif opcode == 0xfe: # CP d8
-                result = self.A - arg
+                result = (self.A - arg) % 0xff
                 zero = (result == 0)
                 carry = (self.A < arg)
                 # TODO: set half_carry
 
             elif opcode == 0xff: # RST 38H
                 self.memory.set16(self.SP, self.PC)
-                self.SP -= 0x10
+                self.SP = (self.SP - 0x10) % 0xffff
                 self.PC = self.memory[0x0038]
             else:
                 raise unknown_opcode()
