@@ -1,6 +1,5 @@
 import sdl2
 import sdl2.ext
-import numpy as np
 
 from memory import Memory
 from util import (
@@ -60,8 +59,8 @@ class Display(object):
             # TODO: Read the LCDCONT register to determine whether we should
             # read from 0x8000-0x8fff or 0x8800-0x97ff.
 
-            log("scx=%d scy=%d ly=%d lcdcont=%0.2x" % (self.SCX, self.SCY,
-                self.LY, self.LCDCONT))
+            #log("scx=%d scy=%d ly=%d lcdcont=%0.2x" % (self.SCX, self.SCY,
+                #self.LY, self.LCDCONT))
             for x in range(self.width//2):
                 vpixel = self.ram[x + (self.SCX//2) + (self.SCY+self.LY)*self.width//4]
                 pixel1 = (vpixel & 0xf0) >> 4
@@ -88,11 +87,20 @@ class Display(object):
     @LCDCONT.setter
     def LCDCONT(self, value):
         self._LCDCONT = value % 0xff
-        self.set_active(self._LCDCONT & (1<<7) != 0)
+        log("LCDCONT display=%s background=%s" % ("on" if self.lcd_operation
+            else "off", "on" if self.background_display else "off"))
 
-    def set_active(self, flag):
-        if not self.turned_on and flag:
-            log("LCD turned on")
-        elif self.turned_on and not flag:
-            log("LCD turned off")
-        self.turned_on = flag
+    @property
+    def lcd_operation(self):
+        return (self._LCDCONT & (1<<7)) !=0
+
+    @property
+    def tile_pattern_table_address(self):
+        if (self._LCDCONT & (1<<4)) == 0:
+            return 0x8800, 0x97ff
+        else:
+            return 0x8000, 0x8fff
+
+    @property
+    def background_display(self):
+        return (self._LCDCONT & 1) == 1

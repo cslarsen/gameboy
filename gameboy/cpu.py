@@ -51,6 +51,7 @@ class CPU(object):
 
         # Amount of cycles spent
         self.cycles = 0
+        self.total_cycles = 0
         self.start = None
 
         # Save last fully decoded instruction for errors
@@ -167,16 +168,21 @@ class CPU(object):
             self.cycles %= ratio
             self.memory.display.step()
 
+    @property
+    def emulated_MHz(self):
+        """Attempts to measure emulated clockspeed."""
+        if self.start is None:
+            return 0
+        else:
+            cps = self.total_cycles / (time.clock() - self.start)
+            return cps / 1000000.0
+
     def print_registers(self):
         print("pc=$%0.4x sp=$%0.4x a=$%0.2x b=$%0.2x c=$%0.2x d=$%0.2x e=$%0.2x f=$%0.1x h=$%0.2x l=$%0.2x" %
                 (self.PC, self.SP, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
-        if self.start is None:
-            cps = 0
-        else:
-            cps = self.cycles / (time.clock() - self.start)
-            cps /= 1000000.0
-        print("flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F), self.cycles, cps))
+        print("flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F),
+            self.total_cycles, self.emulated_MHz))
 
     @property
     def HL(self):
@@ -283,7 +289,7 @@ class CPU(object):
             if opcode == 0x11: # RL C
                 carry = (self.C & (1<<7)) >> 7
                 self.C = (self.C << 1) % 0xff
-		zero = (self.C == 0)
+                zero = self.C == 0
             elif opcode == 0x7c: # BIT 7, H
                 zero = not (self.H & (1<<7))
             else:
@@ -388,7 +394,10 @@ class CPU(object):
             elif opcode == 0x17: # RLA
                 carry = (self.A & (1<<7)) >> 7
                 self.A = (self.A << 1) % 0xff
-		zero = (self.A == 0)
+                if self.A == 0:
+                    zero = True
+                else:
+                    zero = False
 
             elif opcode == 0x1a: # LD A, (DE)
                 self.A = self.memory[self.DE]
@@ -565,3 +574,4 @@ class CPU(object):
                     self.C_flag = carry
 
         self.cycles += cycles
+        self.total_cycles += cycles

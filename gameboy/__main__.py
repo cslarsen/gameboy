@@ -83,6 +83,9 @@ def main():
         else:
             try:
                 gameboy.cpu.run(trace=opt.trace)
+            except KeyboardInterrupt:
+                log("Emulated at %.1f MHz" % gameboy.cpu.emulated_MHz)
+                raise
             except Exception as e:
                 log("\n\n*** Exception: %s" % e)
                 gameboy.cpu.print_registers()

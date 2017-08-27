@@ -23,6 +23,16 @@ To disassemble a file:
 
     $ python gameboy --start-address=0x00 --disassemble=gameboy/roms/boot
 
+Supported Python versions
+=========================
+
+Python 2.7, 3.x and pypy with PySDL2 and numpy.
+
+To use with pypy, install PySDL2 and a version of numpy that works:
+
+    $ pypy -m pip install PySDL2
+    $ pypy -m pip install git+https://bitbucket.org/pypy/numpy.git
+
 References
 ==========
 
