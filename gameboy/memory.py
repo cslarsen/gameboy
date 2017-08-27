@@ -131,7 +131,6 @@ class MemoryController(object):
         """Writes one byte to memory."""
         if address == 0xff40:
             self.display.LCDCONT = value
-            self.display.set_active(True)
             return
         if address == 0xff42:
             self.display.SCY = value

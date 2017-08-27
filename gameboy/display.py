@@ -18,13 +18,17 @@ class Display(object):
         self.LY = 0
         self.SCY = 0
         self.SCX = 0
-        self.LCDCONT = 0
+        self._LCDCONT = 0
 
         self.scanlines = 154
         self.turned_on = False
 
+        self.width = 160
+        self.height = 144
+
         sdl2.ext.init()
-        self.window = sdl2.ext.Window(title="Classic GameBoy", size=(160, 144))
+        self.window = sdl2.ext.Window(title="Classic GameBoy",
+                size=(self.width, self.height))
         self.window.show()
 
         self.buffer = sdl2.ext.pixels2d(self.window.get_surface())
@@ -56,8 +60,10 @@ class Display(object):
             # TODO: Read the LCDCONT register to determine whether we should
             # read from 0x8000-0x8fff or 0x8800-0x97ff.
 
+            log("scx=%d scy=%d ly=%d lcdcont=%0.2x" % (self.SCX, self.SCY,
+                self.LY, self.LCDCONT))
             for x in range(self.width//2):
-                vpixel = self.ram[x + self.SCX + (self.SCY+self.LY)*self.width//4]
+                vpixel = self.ram[x + (self.SCX//2) + (self.SCY+self.LY)*self.width//4]
                 pixel1 = (vpixel & 0xf0) >> 4
                 pixel2 = (vpixel & 0x0f)
 
@@ -75,17 +81,18 @@ class Display(object):
 
         self.window.refresh()
 
+    @property
+    def LCDCONT(self):
+        return self._LCDCONT
+
+    @LCDCONT.setter
+    def LCDCONT(self, value):
+        self._LCDCONT = value % 0xff
+        self.set_active(self._LCDCONT & (1<<7) != 0)
+
     def set_active(self, flag):
         if not self.turned_on and flag:
             log("LCD turned on")
         elif self.turned_on and not flag:
             log("LCD turned off")
         self.turned_on = flag
-
-    @property
-    def width(self):
-        return 160
-
-    @property
-    def height(self):
-        return 144
