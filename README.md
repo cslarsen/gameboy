@@ -31,6 +31,7 @@ References
   * [Gameboy Bootstrap ROM](http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM)
   * [Gameboy CPU (LR35902) instruction set](http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
   * [Gameboy on Wikipedia](https://en.wikipedia.org/wiki/Game_Boy)
+  * [GameBoy Programming Info](https://fms.komkon.org/GameBoy/Tech/Software.html)
   * [Pan Docs](http://bgb.bircd.org/pandocs.htm#cpuinstructionset)
   * [The Game Boy Project](http://marc.rawer.de/Gameboy/Docs/GBProject.pdf)
 

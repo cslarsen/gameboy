@@ -74,3 +74,6 @@ a jump that was not interpreted relatively. Fixing that, the program seemed to
 run forever. Breaking in the debugger, I saw what was happening: The boot code
 was waiting for the next screen frame! That means it's time to implement the
 hardware I/O registers.
+
+Started implementing the video display driver. Currently, it just draws
+rubbish, but at least something is happening!
