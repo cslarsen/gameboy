@@ -8,6 +8,8 @@ The reason is that real GameBoy programs must clear out the memory, not relying
 on the RAM being zero initialized. This will then serve as a litmus test for
 non-official GameBoy programs. Good if you intend to run the program on a real
 GameBoy at some point.
+
+TODO: Provide a better mapping of special memory locations such as 0xff44.
 """
 
 from util import (
@@ -103,6 +105,9 @@ class MemoryController(object):
             memory, offset = self._memory_map(address.start)
             return memory[address.start-offset:address.stop-offset]
 
+        if address == 0xff44:
+            return self.display.ly
+
         memory, offset = self._memory_map(address)
         if address < offset:
             raise IndexError("%r: Adress 0x%0.4x less than offset 0x%0.4x" % (
@@ -116,6 +121,10 @@ class MemoryController(object):
 
     def __setitem__(self, address, value):
         """Writes one byte to memory."""
+        if address == 0xff44:
+            # writes reset
+            self.display.ly = 0
+
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
 

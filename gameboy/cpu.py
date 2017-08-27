@@ -13,6 +13,7 @@ import time
 from util import (
     format_bin,
     format_hex,
+    log,
     u16_to_u8,
     u8_to_signed,
     u8_to_u16,
@@ -158,6 +159,13 @@ class CPU(object):
             sys.stdout.write("\n")
             sys.stdout.flush()
             self.print_registers()
+
+        # Let the display do its thing, timed *very* roughly
+        ratio = int((self.MHz*1e6 / self.memory.display.fps) /
+                self.memory.display.scanlines)
+        if self.cycles >= ratio:
+            self.cycles %= ratio
+            self.memory.display.step()
 
     def print_registers(self):
         print("pc=$%0.4x sp=$%0.4x a=$%0.2x b=$%0.2x c=$%0.2x d=$%0.2x e=$%0.2x f=$%0.1x h=$%0.2x l=$%0.2x" %
