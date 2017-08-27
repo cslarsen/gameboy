@@ -540,6 +540,11 @@ class CPU(object):
                 self.memory.set16(self.SP, self.PC)
                 self.SP = (self.SP - 0x10) % 0xffff
                 self.PC = self.memory[0x0038]
+
+            elif opcode == 0x90: # SUB B
+                self.A = (self.A - self.B) % 0xff
+                zero = (self.A == 0)
+                # TODO: set half carry and carry flags
             else:
                 raise unknown_opcode()
 
