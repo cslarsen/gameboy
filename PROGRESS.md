@@ -68,3 +68,15 @@ After a few hours I suddenly realized that the debugger had grown to become
 pretty decent, even though it was very rudimentary. It supports step-debugging,
 break and continue. The surprise was mostly how I now depended on a working
 Gameboy debugger.
+
+Was able to implement nearly all the instructions for the boot code. However,
+at this point the debugging has become very difficult due to the sheer
+complexity of following the program flow. I am getting an attempt to access
+negative memory. Need to track down that bug.
+
+Next steps: Implement half-carry flags, debug until the boot code runs
+perfectly. It currently runs loops correctly, calls with returns and so on. My
+guess is that I'll be able to run the entire boot code without *too* much
+hassle. After that, I can start implementing the display functions and see what
+happens there. My gut feeling is that running with a display will only uncover
+more bugs at the current state of affairs.
