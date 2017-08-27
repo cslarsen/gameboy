@@ -17,6 +17,7 @@ class Display(object):
         # pseudo-registers
         self.LY = 0
         self._SCY = 0
+        self._SCX = 0
 
         self.scanlines = 154
         self.turned_on = False
@@ -50,13 +51,12 @@ class Display(object):
                 raise StopIteration("SDL quit")
 
         if self.LY < self.height:
-            # TODO: First draw the background tiles. That should be the best
-            # way to proceed
+            # Draw background tiles
+            # TODO: Read the LCDCONT register to determine whether we should
+            # read from 0x8000-0x8fff or 0x8800-0x97ff.
 
-            # GameBoy doesn't store a bitmap of the entire screen, so the below
-            # code is just rubbish.
             for x in range(self.width//2):
-                vpixel = self.ram[x + (self.SCY+self.LY)*self.width//4]
+                vpixel = self.ram[x + self.SCX + (self.SCY+self.LY)*self.width//4]
                 pixel1 = (vpixel & 0xf0) >> 4
                 pixel2 = (vpixel & 0x0f)
 
@@ -65,8 +65,6 @@ class Display(object):
 
                 self.put_pixel(x*2, self.LY, color1)
                 self.put_pixel(x*2+1, self.LY, color2)
-
-            #self.buffer[x][self.LY] = pixel1
         else:
             # Vertical blank period
             pass
@@ -76,17 +74,26 @@ class Display(object):
 
         self.window.refresh()
 
-    @property
-    def SCY(self):
-        """Scroll Y."""
-        return self._SCY
-
     def set_active(self, flag):
         if not self.turned_on and flag:
             log("LCD turned on")
         elif self.turned_on and not flag:
             log("LCD turned off")
         self.turned_on = flag
+
+    @property
+    def SCX(self):
+        """Scroll X."""
+        return self._SCX
+
+    @SCX.setter
+    def SCX(self, value):
+        self._SCX = self._SCX % 0xff
+
+    @property
+    def SCY(self):
+        """Scroll Y."""
+        return self._SCY
 
     @SCY.setter
     def SCY(self, value):
