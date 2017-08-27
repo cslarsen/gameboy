@@ -288,13 +288,6 @@ class CPU(object):
                 self.A = 0
                 zero = True
 
-            elif opcode == 0x20: # JR NZ, r8
-                if self.Z_flag:
-                    cycles = cycles[1]
-                else:
-                    cycles = cycles[0]
-                    self.PC = (self.PC + arg) % 0xffff
-
             elif opcode == 0x3e: # LD A, d8
                 self.LD = arg
 
@@ -389,9 +382,6 @@ class CPU(object):
                 self.A = (self.A << 1) % 0xff
 		zero = (self.A == 0)
 
-            elif opcode == 0x18: # JR r8
-                self.PC = arg
-
             elif opcode == 0x1a: # LD A, (DE)
                 self.A = self.memory[self.DE]
 
@@ -415,12 +405,22 @@ class CPU(object):
                 zero = (self.H == 0)
                 # TODO: Set half carry
 
+            elif opcode == 0x18: # JR r8
+                self.PC = (self.PC + arg) % 0xffff
+
             elif opcode == 0x28: # JR Z, r8
                 if self.Z_flag:
                     cycles = cycles[0]
-                    self.PC += arg
+                    self.PC = (self.PC + arg) % 0xffff
                 else:
                     cycles = cycles[1]
+
+            elif opcode == 0x20: # JR NZ, r8
+                if self.Z_flag:
+                    cycles = cycles[1]
+                else:
+                    cycles = cycles[0]
+                    self.PC = (self.PC + arg) % 0xffff
 
             elif opcode == 0x2e: # LD L, d8
                 self.L = arg
