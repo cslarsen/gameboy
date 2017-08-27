@@ -1,4 +1,4 @@
-Gameboy Classic Emulator in Python
+GameBoy Classic Emulator in Python
 ==================================
 
 This is my attempt to make a fully working Gameboy emulator from scratch,
@@ -26,6 +26,7 @@ To disassemble a file:
 References
 ==========
 
+  * [Duo's GameBoy Memory Map](http://gameboy.mongenel.com/dmg/asmmemmap.html)
   * [Game Boy™ CPU Manual](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
   * [Gameboy Bootstrap ROM](http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM)
   * [Gameboy CPU (LR35902) instruction set](http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
@@ -39,5 +40,8 @@ License
 Copyright 2017 Christian Stigen Larsen  
 Distributed under the GNU GPL v3 or later.
 
-The DMG-01 boot ROM in `roms/boot` is owned and copyrighted by Nintendo. You
-are not allowed to use or redistribute that file outside of this repository.
+The DMG-01 boot ROM in `roms/boot` is owned and copyrighted by Nintendo Co.,
+Ltd. You are not allowed to use or redistribute that file outside of this
+repository.
+
+GameBoy is a registered trademark of the Nintendo Corporation.
