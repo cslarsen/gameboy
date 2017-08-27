@@ -40,6 +40,9 @@ class Display(object):
         return 0xff0000 # Mark invalid pixels as red
         #raise RuntimeError("Invalid 4-bit color value %d" % color)
 
+    def put_pixel(self, x, y, color):
+        self.buffer[x][y] = self._u32color(color)
+
     def step(self):
         events = sdl2.ext.get_events()
         for event in events:
@@ -60,8 +63,8 @@ class Display(object):
                 color1 = self._u32color(pixel1)
                 color2 = self._u32color(pixel2)
 
-                self.buffer[x*2][self.LY] = color1
-                self.buffer[1+x*2][self.LY] = color1
+                self.put_pixel(x*2, self.LY, color1)
+                self.put_pixel(x*2+1, self.LY, color2)
 
             #self.buffer[x][self.LY] = pixel1
         else:
