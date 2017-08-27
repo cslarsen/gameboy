@@ -297,7 +297,7 @@ class CPU(object):
                 zero = True
 
             elif opcode == 0x3e: # LD A, d8
-                self.LD = arg
+                self.A = arg
 
             elif opcode == 0x21: # LD HL, d16
                 self.HL = arg

@@ -16,8 +16,9 @@ class Display(object):
 
         # pseudo-registers
         self.LY = 0
-        self._SCY = 0
-        self._SCX = 0
+        self.SCY = 0
+        self.SCX = 0
+        self.LCDCONT = 0
 
         self.scanlines = 154
         self.turned_on = False
@@ -80,24 +81,6 @@ class Display(object):
         elif self.turned_on and not flag:
             log("LCD turned off")
         self.turned_on = flag
-
-    @property
-    def SCX(self):
-        """Scroll X."""
-        return self._SCX
-
-    @SCX.setter
-    def SCX(self, value):
-        self._SCX = self._SCX % 0xff
-
-    @property
-    def SCY(self):
-        """Scroll Y."""
-        return self._SCY
-
-    @SCY.setter
-    def SCY(self, value):
-        self._SCY = self._SCY % 0xff
 
     @property
     def width(self):

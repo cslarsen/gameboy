@@ -72,14 +72,14 @@ class MemoryController(object):
         """Returns (array, offset) that correspond to the given memory mapped
         address."""
 
-        if 0x0000 <= address < 0x0100:
+        if 0x0 <= address < 0x0100:
             # Contains a few reserved memory locations. However, on power-up,
             # this are will refer to the boot ROM. After boot-up, this area
             # will be usable again.
-            return self.boot_rom, 0x0000
+            return self.boot_rom, 0x0
 
-        if 0x0000 <= address < 0x4000:
-            return self.fixed_home, 0x0000
+        if 0x0 <= address < 0x4000:
+            return self.fixed_home, 0x0
 
         if address < 0x8000:
             return self.home, 0x4000
@@ -98,6 +98,7 @@ class MemoryController(object):
     def __getitem__(self, address):
         """Reads one byte from memory."""
         if isinstance(address, slice):
+            # Slice reads is only used by the debugger
             if address.step is not None:
                 raise ValueError("Slice steps not supported")
             if (address.stop - address.start) > 0x2000:
@@ -105,6 +106,9 @@ class MemoryController(object):
             memory, offset = self._memory_map(address.start)
             return memory[address.start-offset:address.stop-offset]
 
+        # Intercept a few I/O locations for now, restructure later.
+        if address == 0xff40:
+            return self.display.LCDCONT
         if address == 0xff42:
             return self.display.SCY
         if address == 0xff43:
@@ -125,25 +129,22 @@ class MemoryController(object):
 
     def __setitem__(self, address, value):
         """Writes one byte to memory."""
+        if address == 0xff40:
+            self.display.LCDCONT = value
+            self.display.set_active(True)
+            return
         if address == 0xff42:
             self.display.SCY = value
             return
-
         if address == 0xff43:
             self.display.SCX = value
             return
-
         if address == 0xff44:
             # Any write to this location will reset LY
             self.display.LY = 0
             return
-
         if address == 0xff50:
             raise NotImplementedError("DMG ROM turned off, boot code ran to finish!")
-
-        if address == 0xff40:
-            self.display.set_active(True)
-            return
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
