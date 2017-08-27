@@ -30,14 +30,14 @@ class Display(object):
     def _u32color(self, color):
         """Converts GameBoy colors to 24-bit colors."""
         if color == 0:
-            return 0x0
-        if color == 1:
-            return 0x444444
-        if color == 2:
-            return 0x999999
-        if color == 3:
             return 0xffffff
-        return 0xff0000 # Mark as red
+        if color == 1:
+            return 0xaaaaaa
+        if color == 2:
+            return 0x666666
+        if color == 3:
+            return 0x000000
+        return 0xff0000 # Mark invalid pixels as red
         #raise RuntimeError("Invalid 4-bit color value %d" % color)
 
     def step(self):
