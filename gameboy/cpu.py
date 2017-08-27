@@ -336,12 +336,17 @@ class CPU(object):
                 self.memory[self.BC] = self.A
 
             elif opcode == 0x04: # INC B
-                raise not_implemented()
+                self.B = (self.B + 1) % 0xff
+                if self.B == 8:
+                    half_carry = True
+                if self.B > 0xff:
+                    self.B = 0
+                zero = (self.B == 0)
 
             elif opcode == 0x05: # DEC B
-                half_carry = (self.B == 16) # TODO: Fixme
                 self.B = (self.B - 1) % 0xff
                 zero = (self.B == 0)
+                # TODO: Implement half-carry flag
 
             elif opcode == 0x06: # LD B, d8
                 self.B = arg
@@ -353,8 +358,7 @@ class CPU(object):
                 self.BC -= 1
 
             elif opcode == 0x0c: # INC C
-                # TODO: Implement as real unsigned 8-bit type
-                self.C += 1
+                self.C = (self.C + 1) % 0xff
                 if self.C == 8:
                     half_carry = True
                 if self.C > 0xff:
@@ -362,7 +366,9 @@ class CPU(object):
                 zero = (self.C == 0)
 
             elif opcode == 0x0d: # DEC C
-                raise not_implemented()
+                self.C = (self.C - 1) % 0xff
+                zero = (self.C == 0)
+                # TODO: set half_carry flag
 
             elif opcode == 0x0e: # LD C, d8
                 self.C = arg
@@ -377,7 +383,9 @@ class CPU(object):
                 self.DE += 1
 
             elif opcode == 0x15: # DEC D
-                raise not_implemented()
+                self.D = (self.D - 1) % 0xff
+                zero = (self.D == 0)
+                # TODO: set half_carry flag
 
             elif opcode == 0x16: # LD D, d8
                 self.D = arg
@@ -394,7 +402,9 @@ class CPU(object):
                 self.A = self.memory[self.DE]
 
             elif opcode == 0x1d: # DEC E
-                raise not_implemented()
+                self.E = (self.E - 1) % 0xff
+                zero = (self.E == 0)
+                # TODO: set half_carry flag
 
             elif opcode == 0x1e: # LD E, d8
                 self.E = arg
@@ -407,7 +417,9 @@ class CPU(object):
                 self.HL += 1
 
             elif opcode == 0x24: # INC H
-                raise not_implemented()
+                self.H = (self.H + 1) % 0xff
+                # TODO: Set half carry
+                zero = (self.H == 0)
 
             elif opcode == 0x28: # JR Z, r8
                 if self.Z_flag:
@@ -420,10 +432,14 @@ class CPU(object):
                 self.L = arg
 
             elif opcode == 0x33: # INC SP
-                self.SP += 1
+                self.SP = (self.SP + 1) % 0xffff
+                # TODO: Set half_carry flag
+                zero = (self.SP == 0)
 
             elif opcode == 0x3c: # INC A
-                raise not_implemented()
+                self.A = (self.A + 1) % 0xff
+                zero = (self.A == 0)
+                # TODO: set half carry
 
             elif opcode == 0x3d: # DEC A
                 self.A = (self.A - 1) % 0xff
