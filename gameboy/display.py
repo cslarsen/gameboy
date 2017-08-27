@@ -1,5 +1,8 @@
 from memory import Memory
-from util import make_randomized_array
+from util import (
+    log,
+    make_randomized_array,
+)
 
 class Display(object):
     def __init__(self):
@@ -13,6 +16,8 @@ class Display(object):
 
         self.scanlines = 154
 
+        self.turned_on = False
+
     def step(self):
         # Actually, while drawing, we should update the current scanline
         self.LY = (self.LY + 1) % self.scanlines
@@ -21,6 +26,13 @@ class Display(object):
     def SCY(self):
         """Scroll Y."""
         return self._SCY
+
+    def set_active(self, flag):
+        if not self.turned_on and flag:
+            log("LCD turned on")
+        elif self.turned_on and not flag:
+            log("LCD turned off")
+        self.turned_on = flag
 
     @SCY.setter
     def SCY(self, value):

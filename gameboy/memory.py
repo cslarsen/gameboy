@@ -133,7 +133,11 @@ class MemoryController(object):
             return
 
         if address == 0xff50:
-            raise NotImplemented("DMG ROM turned off, boot code ran to finish!")
+            raise NotImplementedError("DMG ROM turned off, boot code ran to finish!")
+
+        if address == 0xff40:
+            self.display.set_active(True)
+            return
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
