@@ -50,17 +50,18 @@ fetch, decode and execute stages.
 Restructured the code. Seem to have fixed the memory mapping. At least it's
 good enough for now.
 
-Made a very simple debugger and used it to debug incorrect instruction
-implementations. After a few hours, I suddenly realized that the debugger had
-grown considerably in functionality.
+Made a very simple debugger and used it to debug CPU instructions.  A few hours
+in, I suddenly realized how essential the debugger had come to be.
 
-Jumps, calls and returns now work, meaning loops work. With the debugger I can
-trace through the boot code. It actually seems to be working. The emulator
-currently runs at 0.6 MHz, which isn't too bad for unoptimized Python. *If*
-that ever becomes a problem, I'll whip out C and Cython do nuke that problem
-from space.
+Jumps, calls and returns work, meaning loops work. Seems to execute the boot
+code correctly, although debugging far out in the code has become overwhelming.
 
-At the end of the day, there's an invalid memory access that stops progress.
+The emulator currently runs at 0.6 MHz, which isn't too bad for unoptimized
+Python. *If* that ever becomes an annoyance, I'll whip out C and Cython to nuke
+the problem from space.
+
+At the end of the day, there's an invalid memory access that stops progress,
+preventing the boot code to finish.
 
 Next up: Get the boot code to run to end. After that, it's time to hook up a 2D
 display. My gut feeling is that will uncover new bugs.
