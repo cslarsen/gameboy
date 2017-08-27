@@ -554,6 +554,18 @@ class CPU(object):
                 self.A = (self.A - self.B) % 0xff
                 zero = (self.A == 0)
                 # TODO: set half carry and carry flags
+
+            elif opcode == 0xbe: # CP (HL)
+                result = (self.A - self.memory[self.HL]) % 0xff
+                zero = (result == 0)
+                carry = (self.A < arg)
+                # TODO: set half_carry
+
+            elif opcode == 0x86: # ADD A, (HL)
+                self.A = (self.A + self.memory[self.HL]) % 0xff
+                zero = (self.A == 0)
+                # TODO: Set other flags
+
             else:
                 raise unknown_opcode()
 
