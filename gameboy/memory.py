@@ -106,7 +106,7 @@ class MemoryController(object):
             return memory[address.start-offset:address.stop-offset]
 
         if address == 0xff44:
-            return self.display.ly
+            return self.display.LY
 
         memory, offset = self._memory_map(address)
         if address < offset:
@@ -123,7 +123,7 @@ class MemoryController(object):
         """Writes one byte to memory."""
         if address == 0xff44:
             # writes reset
-            self.display.ly = 0
+            self.display.LY = 0
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value

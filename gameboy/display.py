@@ -8,12 +8,12 @@ class Display(object):
         self.fps = 59.7
 
         # pseudo-registers
-        self.ly = 0
+        self.LY = 0
         self.scanlines = 154
 
     def step(self):
         # Actually, while drawing, we should update the current scanline
-        self.ly = (self.ly + 1) % self.scanlines
+        self.LY = (self.LY + 1) % self.scanlines
 
     @property
     def width(self):
