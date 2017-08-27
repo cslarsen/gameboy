@@ -65,3 +65,8 @@ preventing the boot code to finish.
 
 Next up: Get the boot code to run to end. After that, it's time to hook up a 2D
 display. My gut feeling is that will uncover new bugs.
+
+Day 4
+-----
+
+Well, the previous bug was just that as relative jump didn't do it relatively.
