@@ -44,39 +44,23 @@ it properly, I can abstract this further, reducing code.
 Day 3
 -----
 
-Continuing with the grunt work of actually implementing the instructions. Added
-the first working jump instruction. It's very easy, but takes a long time
-because I haven't structured the code very well. Maybe I'll just implement an
-instruction class so I can put the implementation right there and then. That's
-doable now that I have a rough outline of the main stages: fetching, decoding
-and executing.
+Continued implementing instructions. I'm very happy with how I separated the
+fetch, decode and execute stages.
 
-The memory mapping is still a mess, but will be revisited as soon as I have
-implemented enough instructions to run the boot code. Then I'll hook up a
-2D window for the display, meaning I probably have to delve into how the bus
-works. Hopefully I'll see some scrolling pixels!
+Restructured the code. Seem to have fixed the memory mapping. At least it's
+good enough for now.
 
-Got the first loop in the bood ROM to run. It tries to write into read-only
-memory at the end, though, so I have to go back and check the memory mapping
-again.
+Made a very simple debugger and used it to debug incorrect instruction
+implementations. After a few hours, I suddenly realized that the debugger had
+grown considerably in functionality.
 
-Measured that the RAM-cleaning code runs in real-time with a clock-speed of
-0.6-0.7 MHz. That means I have to make the final code almost ten times faster!
-But before I make it faster, I have to make it correct.
+Jumps, calls and returns now work, meaning loops work. With the debugger I can
+trace through the boot code. It actually seems to be working. The emulator
+currently runs at 0.6 MHz, which isn't too bad for unoptimized Python. *If*
+that ever becomes a problem, I'll whip out C and Cython do nuke that problem
+from space.
 
-After a few hours I suddenly realized that the debugger had grown to become
-pretty decent, even though it was very rudimentary. It supports step-debugging,
-break and continue. The surprise was mostly how I now depended on a working
-Gameboy debugger.
+At the end of the day, there's an invalid memory access that stops progress.
 
-Was able to implement nearly all the instructions for the boot code. However,
-at this point the debugging has become very difficult due to the sheer
-complexity of following the program flow. I am getting an attempt to access
-negative memory. Need to track down that bug.
-
-Next steps: Implement half-carry flags, debug until the boot code runs
-perfectly. It currently runs loops correctly, calls with returns and so on. My
-guess is that I'll be able to run the entire boot code without *too* much
-hassle. After that, I can start implementing the display functions and see what
-happens there. My gut feeling is that running with a display will only uncover
-more bugs at the current state of affairs.
+Next up: Get the boot code to run to end. After that, it's time to hook up a 2D
+display. My gut feeling is that will uncover new bugs.
