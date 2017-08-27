@@ -53,7 +53,7 @@ good enough for now.
 Made a very simple debugger and used it to debug CPU instructions.  A few hours
 in, I suddenly realized how essential the debugger had come to be.
 
-Jumps, calls and returns work, meaning loops work. Seems to execute the boot
+Jumps and call with return work, meaning loops work. Seems to execute the boot
 code correctly, although debugging far out in the code has become overwhelming.
 
 The emulator currently runs at 0.6 MHz, which isn't too bad for unoptimized
