@@ -9,11 +9,22 @@ class Display(object):
 
         # pseudo-registers
         self.LY = 0
+        self._SCY = 0
+
         self.scanlines = 154
 
     def step(self):
         # Actually, while drawing, we should update the current scanline
         self.LY = (self.LY + 1) % self.scanlines
+
+    @property
+    def SCY(self):
+        """Scroll Y."""
+        return self._SCY
+
+    @SCY.setter
+    def SCY(self, value):
+        self._SCY = self._SCY % 0xff
 
     @property
     def width(self):

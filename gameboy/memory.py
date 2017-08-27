@@ -107,6 +107,8 @@ class MemoryController(object):
 
         if address == 0xff44:
             return self.display.LY
+        if address == 0xff42:
+            return self.display.SCY
 
         memory, offset = self._memory_map(address)
         if address < offset:
@@ -124,6 +126,11 @@ class MemoryController(object):
         if address == 0xff44:
             # writes reset
             self.display.LY = 0
+            return
+
+        if address == 0xff42:
+            self.display.SCY = value
+            return
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
