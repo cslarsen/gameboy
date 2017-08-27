@@ -132,6 +132,9 @@ class MemoryController(object):
             self.display.SCY = value
             return
 
+        if address == 0xff50:
+            raise NotImplemented("DMG ROM turned off, boot code ran to finish!")
+
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
 
