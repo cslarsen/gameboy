@@ -69,4 +69,8 @@ display. My gut feeling is that will uncover new bugs.
 Day 4
 -----
 
-Well, the previous bug was just that as relative jump didn't do it relatively.
+Had I just spent five more minutes the last time, I'd see that the problem was
+a jump that was not interpreted relatively. Fixing that, the program seemed to
+run forever. Breaking in the debugger, I saw what was happening: The boot code
+was waiting for the next screen frame! That means it's time to implement the
+hardware I/O registers.
