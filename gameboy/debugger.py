@@ -8,6 +8,12 @@ from util import (
     wait_enter,
 )
 
+def number(args, index, default):
+    try:
+        return parse_number(args[index])
+    except:
+        return default
+
 def parse_number(s):
     sign = 1
     if s.startswith("-"):
@@ -84,10 +90,9 @@ class Debugger(object):
         elif c == "h":
             self.print_help()
         elif c == "m":
-            try:
-                self.dump_memory(*map(parse_number, args))
-            except ValueError as e:
-                log(e)
+            start = number(args, 0, 0)
+            end = number(args, 1, start+8)
+            self.dump_memory(start, end)
         elif c == "l":
             address = self.PC
             length = 16
@@ -126,17 +131,28 @@ class Debugger(object):
                 self.breakpoints.add(bp)
                 log("Breaking on %s" % format_hex(bp))
 
-    def dump_memory(self, *addresses):
-        for addr in addresses:
-            try:
-                raw = self.gameboy.memory[addr:addr+8]
-                log("%s:  %s" % (addr, " ".join(map(lambda x: format_hex(x,
+    def dump_memory(self, start, stop):
+        try:
+            raw = []
+            addr = start
+            for n in range(0, stop-start):
+                # Don't read by slice. We want to get the I/O data as well.
+                raw.append(self.gameboy.memory[start+n])
+                if len(raw) == 8:
+                    log("$%0.4x:  %s" % (addr, " ".join(map(lambda x: format_hex(x,
+                        prefix="0x"), raw))))
+                    addr += 8
+                    raw = []
+            if len(raw) > 0:
+                log("$%0.4x:  %s" % (addr, " ".join(map(lambda x: format_hex(x,
                     prefix="0x"), raw))))
-            except IndexError as e:
-                log(e)
+        except IndexError as e:
+            log(e)
 
     def disassemble(self, address, length=16):
-        code = self.gameboy.cpu.memory[address:address+length]
+        code = []
+        for n in range(address, address+length):
+            code.append(self.gameboy.cpu.memory[n])
         try:
             disassemble(code, start_address=address)
         except IndexError:

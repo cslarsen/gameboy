@@ -165,13 +165,13 @@ class Display(object):
 
     def render_background(self):
         # Read the tile table
-        bitmap_addr, bitmap_addr_end = self.tile_table_address
+        tile_table_address, tta_end = self.tile_table_address
 
         xpos, ypos = 0, 0
         for index in range(32*32):
             # TODO: Find out if its signed or unsigned mode and adjust
             # starting address based on that
-            tile_number = self.ram[0x8000 - self.ram.offset + index]
+            tile_number = self.ram[tile_table_address - self.ram.offset + index]
 
             # Get the tile bitmap; 8x8 pixels stored as 2-bit colors
             # meaning 16 bytes of memory

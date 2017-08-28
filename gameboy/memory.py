@@ -106,15 +106,6 @@ class MemoryController(object):
 
     def __getitem__(self, address):
         """Reads one byte from memory."""
-        if isinstance(address, slice):
-            # Slice reads is only used by the debugger
-            if address.step is not None:
-                raise ValueError("Slice steps not supported")
-            if (address.stop - address.start) > 0x2000:
-                raise ValueError("Max slice size is 0x2000")
-            memory, offset = self._memory_map(address.start)
-            return memory[address.start-offset:address.stop-offset]
-
         # Intercept a few I/O locations for now, restructure later.
         if address == 0xff40:
             return self.display.LCDCONT

@@ -31,8 +31,8 @@ def disassemble(code, start_address=0x0000, length=None, stream=sys.stdout):
             write("$%0.4x:  " % address)
             raw = ""
 
-        for byte in code[index:index+bytelen]:
-            raw += "0x%0.2x " % byte
+        for i in range(index, index+bytelen):
+            raw += "0x%0.2x " % code[i]
 
         arg = 0
         for offset in range(1, bytelen):
