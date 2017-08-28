@@ -139,7 +139,7 @@ class Debugger(object):
     def disassemble(self, address, length=16):
         code = self.gameboy.cpu.memory[address:address+length]
         try:
-            disassemble(code, start_address=start)
+            disassemble(code, start_address=address)
         except IndexError:
             log("...")
 
