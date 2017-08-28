@@ -92,6 +92,13 @@ class Display(object):
         self.window = DummyDisplay("GameBoy")
         self._setup_host_display(no_display)
 
+        self.palette = {
+            0: 0xffffff, # lightest
+            1: 0xaaaaaa,
+            2: 0x555555,
+            3: 0x000000, # darkest
+        }
+
     def _setup_host_display(self, no_display):
         if no_display:
             return
@@ -111,14 +118,8 @@ class Display(object):
 
     def palette_to_rgb(self, color):
         """Converts GameBoy palette color to a 24-bit RGB value."""
-        # Mark bugs with this color
-        non_palette_color = 0xff0000
-        return {
-            0: 0xffffff,
-            1: 0xaaaaaa,
-            2: 0x666666,
-            3: 0x000000,
-        }.get(color, non_palette_color)
+        color_for_bugs = 0xff0000
+        return self.palette.get(color, color_for_bugs)
 
     def put_pixel(self, x, y, color):
         assert(color < 4)
@@ -132,6 +133,8 @@ class Display(object):
 
         # If the display is turned off, just exit
         if self.lcd_operation:
+            self.read_palette()
+
             if self.LY < self.height:
                 if self.background_display:
                     self.render_background()
@@ -141,6 +144,24 @@ class Display(object):
             self.inc_ly()
 
         self.window.update()
+
+    def read_palette(self):
+        colors = {
+            0b00: 0xffffff, # lightest
+            0b01: 0xaaaaaa,
+            0b10: 0x555555,
+            0b11: 0x000000, # darkest
+        }
+
+        col3 = (self.BGPAL & 0b11000000) >> 6
+        col2 = (self.BGPAL & 0b00110000) >> 4
+        col1 = (self.BGPAL & 0b00001100) >> 2
+        col0 = (self.BGPAL & 0b00000011) >> 0
+
+        self.palette[0] = colors[col0]
+        self.palette[1] = colors[col1]
+        self.palette[2] = colors[col2]
+        self.palette[3] = colors[col3]
 
     def render_background(self):
         # Read the tile table
