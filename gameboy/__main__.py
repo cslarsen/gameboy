@@ -37,6 +37,9 @@ def parse_command_line_args():
     p.add_argument("--debug", default=False, action="store_true",
             help="Perform interactive step debugging")
 
+    p.add_argument("--no-display", default=False, action="store_true",
+            help="Do not open a 2D display window")
+
     opt = p.parse_args()
 
     if isinstance(opt.start_address, str):
@@ -74,8 +77,8 @@ def main():
         cartridge = Cartridge(binary)
         log(cartridge)
 
-        log("\nBooting Gameboy")
-        gameboy = Gameboy(cartridge, boot)
+        log("Booting Gameboy")
+        gameboy = Gameboy(cartridge, boot, no_display=opt.no_display)
 
         if opt.debug:
             Debugger(gameboy).run()

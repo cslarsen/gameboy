@@ -8,6 +8,27 @@ from util import (
     log,
 )
 
+class DummyDisplay(object):
+    """A display in case you don't want one or can have one.
+
+    E.g. you're on PyPy and don't have SDL, or you're just debugging.
+    """
+    def __init__(self, title):
+        self.width = 256
+        self.height = 256
+
+    def pump_events(self):
+        pass
+
+    def put(self, x, y, color):
+        pass
+
+    def update(self):
+        pass
+
+    def clear(self, color):
+        pass
+
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
     def __init__(self, title):
@@ -43,7 +64,7 @@ class HostDisplay(object):
 
 class Display(object):
     """The GameBoy display system."""
-    def __init__(self):
+    def __init__(self, no_display=False):
         self.ram = Memory(0x2000, offset=0x8000, randomized=True,
                 name="Display RAM")
 
@@ -68,7 +89,24 @@ class Display(object):
         self.width = 160
         self.height = 144
 
-        self.window = HostDisplay("GameBoy")
+        self.window = DummyDisplay("GameBoy")
+        self._setup_host_display(no_display)
+
+    def _setup_host_display(self, no_display):
+        if no_display:
+            return
+
+        try:
+            import numpy # required by SDL2
+        except ImportError as e:
+            log("Disabling display, needs numpy: %s" % e)
+            return
+
+        try:
+            self.window = self.window = HostDisplay("GameBoy")
+        except Exception as e:
+            log("Cannot open host display: %s" % e)
+
         self.window.clear(0x008855)
 
     def palette_to_rgb(self, color):
