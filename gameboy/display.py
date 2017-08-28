@@ -93,10 +93,10 @@ class Display(object):
         self._setup_host_display(no_display)
 
         self.palette = {
-            0: 0xffffff, # lightest
+            0: 0xffffff,
             1: 0xaaaaaa,
             2: 0x555555,
-            3: 0x000000, # darkest
+            3: 0x000000,
         }
 
     def _setup_host_display(self, no_display):
@@ -147,10 +147,10 @@ class Display(object):
 
     def read_palette(self):
         colors = {
-            0b00: 0xffffff, # lightest
-            0b01: 0xaaaaaa,
-            0b10: 0x555555,
-            0b11: 0x000000, # darkest
+            0: 0xffffff, # lightest
+            1: 0xaaaaaa,
+            2: 0x555555,
+            3: 0x000000, # darkest
         }
 
         col3 = (self.BGPAL & 0b11000000) >> 6
