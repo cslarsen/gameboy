@@ -9,14 +9,19 @@ from util import (
 )
 
 def parse_number(s):
+    sign = 1
+    if s.startswith("-"):
+        s = s[1:]
+        sign = -1
+
     if s.startswith("$"):
-        return int(s[1:], 16)
+        return sign*int(s[1:], 16)
     elif s.startswith("0x"):
-        return int(s, 16)
+        return sign*int(s, 16)
     elif s.startswith("0b"):
-        return int(s, 2)
+        return sign*int(s, 2)
     else:
-        return int(s, 10)
+        return sign*int(s, 10)
 
 class Debugger(object):
     def __init__(self, gameboy):
@@ -65,7 +70,10 @@ class Debugger(object):
         elif c == "s":
             self.step(True)
         elif c == "b":
-            self.set_breakpoints(*map(parse_number, args))
+            try:
+                self.set_breakpoints(*map(parse_number, args))
+            except ValueError as e:
+                log("Invalid address")
         elif c == "c":
             while True:
                 self.step(False)
@@ -94,8 +102,8 @@ class Debugger(object):
 
         for bp in breakpoints:
             if bp < 0 and bp in breakpoints:
-                self.breakpoints.remove(bp)
-                log("Removed %s" % format_hex(bp))
+                self.breakpoints.remove(-bp)
+                log("Removed %s" % format_hex(-bp))
             else:
                 self.breakpoints.add(bp)
                 log("Breaking on %s" % format_hex(bp))
