@@ -164,6 +164,7 @@ class CPU(object):
         # Let the display do its thing, timed *very* roughly
         ratio = int((self.MHz*1e6 / self.memory.display.fps) /
                 self.memory.display.scanlines)
+
         if self.cycles >= ratio:
             self.cycles %= ratio
             self.memory.display.step()

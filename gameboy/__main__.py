@@ -4,7 +4,7 @@ import argparse
 
 from __init__ import __copyright__
 from cartridge import Cartridge
-from debugger import debugger
+from debugger import Debugger
 from disassembler import disassemble
 from gameboy import Gameboy
 from util import load_binary, log
@@ -78,7 +78,7 @@ def main():
         gameboy = Gameboy(cartridge, boot)
 
         if opt.debug:
-            debugger(gameboy)
+            Debugger(gameboy).run()
             sys.exit(0)
         else:
             try:
