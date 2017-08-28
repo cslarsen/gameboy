@@ -73,7 +73,7 @@ class Debugger(object):
             try:
                 self.set_breakpoints(*map(parse_number, args))
             except ValueError as e:
-                log("Invalid address")
+                log(e)
         elif c == "c":
             while True:
                 self.step(False)
@@ -84,9 +84,28 @@ class Debugger(object):
         elif c == "h":
             self.print_help()
         elif c == "m":
-            self.dump_memory(*map(parse_number, args))
+            try:
+                self.dump_memory(*map(parse_number, args))
+            except ValueError as e:
+                log(e)
         elif c == "l":
-            self.disassemble()
+            address = self.PC
+            length = 16
+            if len(args) > 2:
+                try:
+                    length = parse_number(arg[1])
+                except ValueError as e:
+                    log(e)
+                    return
+
+            if len(args) > 1:
+                try:
+                    self.disassemble(parse_number(arg), length)
+                except ValueError as e:
+                    log(e)
+                    return
+            else:
+                self.disassemble(self.PC)
         else:
             log("Unknown command: %s" % command)
             return
@@ -117,9 +136,8 @@ class Debugger(object):
             except IndexError as e:
                 log(e)
 
-    def disassemble(self):
-        start = self.gameboy.cpu.PC
-        code = self.gameboy.cpu.memory[start:start+16]
+    def disassemble(self, address, length=16):
+        code = self.gameboy.cpu.memory[address:address+length]
         try:
             disassemble(code, start_address=start)
         except IndexError:
@@ -130,7 +148,7 @@ class Debugger(object):
         log("  b [address / -address]: list, add and remove breakpoints")
         log("  c: continue running until ctrl+c or breakpoint")
         log("  enter: repeat last command")
-        log("  l [address]: disassemble code")
+        log("  l [address] [length]: disassemble code at address and length   bytes out")
         log("  m address: show eight raw bytes in memory")
         log("  q or ctrl+d: quit")
         log("  r: show registers")
