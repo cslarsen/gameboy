@@ -6,6 +6,7 @@ from memory import Memory
 from util import (
     dot,
     log,
+    u8_to_signed,
 )
 
 class DummyDisplay(object):
@@ -167,11 +168,18 @@ class Display(object):
         # Read the tile table
         tile_table_address, tta_end = self.tile_table_address
 
+        if tile_table_address == 0x8800:
+            signed = True
+        else:
+            signed = False
+
         xpos, ypos = 0, 0
         for index in range(32*32):
             # TODO: Find out if its signed or unsigned mode and adjust
             # starting address based on that
             tile_number = self.ram[tile_table_address - self.ram.offset + index]
+            if signed:
+                tile_number = u8_to_signed(tile_number)
 
             # Get the tile bitmap; 8x8 pixels stored as 2-bit colors
             # meaning 16 bytes of memory
