@@ -336,7 +336,7 @@ class CPU(object):
             elif opcode == 0xe2: # LD ($ff00+C), A
                 self.memory[(0xff00 + self.C) % 0xffff] = self.A
 
-            elif opcode == 0xe0: # LDH (a8), A
+            elif opcode == 0xe0: # LDH ($ff00+a8), A
                 self.memory[arg] = self.A
 
             elif opcode == 0x01: # LD BC, d16

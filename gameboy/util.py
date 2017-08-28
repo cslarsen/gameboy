@@ -64,6 +64,10 @@ def log(msg):
     sys.stdout.write("%s\n" % msg)
     sys.stdout.flush()
 
+def dot(*args):
+    sys.stdout.write(" ".join(map(str, args)))
+    sys.stdout.flush()
+
 def wait_enter(prefix):
     if sys.version_info.major < 3:
         return raw_input(prefix)

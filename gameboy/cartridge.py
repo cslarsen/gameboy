@@ -34,7 +34,8 @@ class Cartridge(object):
         """Title of game in uppercase ASCII."""
         s = self.rom_bank[0][0x0134:0x0142]
         s = str(s.tostring().decode("ascii"))
-        s = s[:s.index("\0")]
+        if "\0" in s:
+            s = s[:s.index("\0")]
         return s
 
     @property

@@ -21,9 +21,18 @@ from util import (
 
 class Memory(object):
     def __init__(self, length_or_data, randomized=False, readonly=False,
-            name=None):
+            name=None, offset=0x0):
+        """
+        Args:
+            length_or_data: Number of bytes or initialization data.
+            randomized: Randomize all values.
+            readonly: Prevent writes to memory.
+            name: Optional name of the memory area.
+            offset: Absolute start address in the GameBoy.
+        """
         self.readonly = readonly
         self.name = name
+        self.offset = offset
 
         if isinstance(length_or_data, int):
             length = length_or_data
@@ -115,6 +124,8 @@ class MemoryController(object):
             return self.display.SCX
         if address == 0xff44:
             return self.display.LY
+        if address == 0xff47:
+            return self.display.BGPAL
 
         memory, offset = self._memory_map(address)
         if address < offset:
@@ -141,6 +152,9 @@ class MemoryController(object):
         if address == 0xff44:
             # Any write to this location will reset LY
             self.display.LY = 0
+            return
+        if address == 0xff47:
+            self.display.BGPAL = value
             return
         if address == 0xff50:
             raise NotImplementedError("DMG ROM turned off, boot code ran to finish!")

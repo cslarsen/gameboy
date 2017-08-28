@@ -25,8 +25,7 @@ def debugger(gameboy):
 
     while True:
         try:
-            if (not continue_running) or (gameboy.cpu.PC in
-                    breakpoints):
+            if (not continue_running) or (gameboy.cpu.PC in breakpoints):
                 try:
                     pc = gameboy.cpu.PC
                     if break_nl and pc in breakpoints:
@@ -41,12 +40,24 @@ def debugger(gameboy):
             else:
                 command = ""
 
+            if command == "":
+                try:
+                    break_nl = True
+                    gameboy.cpu.step(not continue_running)
+                    continue
+                except Exception as e:
+                    log("\n\n*** Exception: %s" % e)
+                    continue_running = False
+
             if command.startswith("q"):
                 break
-            elif command.startswith("c"):
+
+            if command.startswith("c"):
                 continue_running = True
                 break_nl = True
-            elif command.startswith("b"):
+                continue
+
+            if command.startswith("b"):
                 for bp in command.split()[1:]:
                     breakpoints.add(parse_number(bp))
 
@@ -56,7 +67,9 @@ def debugger(gameboy):
                     log("Breakpoints: ")
                     for bp in sorted(breakpoints):
                         log("  + $%0.4x" % bp)
-            elif command.startswith("h"):
+                continue
+
+            if command.startswith("h"):
                 log("Commands:")
                 log("  - Enter for next instruction")
                 log("  - Q or CTRL+D quit")
@@ -65,9 +78,13 @@ def debugger(gameboy):
                 log("  - B <address> stops at PC=address")
                 log("  - M <address> shows eight bytes from memory")
                 log("All numbers can be entered as decimal or 0x00 hex")
-            elif command.startswith("r"):
+                continue
+
+            if command.startswith("r"):
                 gameboy.cpu.print_registers()
-            elif command.startswith("m"):
+                continue
+
+            if command.startswith("m"):
                 addr = command.split()
                 if len(addr) > 1:
                     addr = parse_number(addr[1])
@@ -77,25 +94,18 @@ def debugger(gameboy):
                             raw)))
                     except IndexError as e:
                         log(e)
-            elif command.strip() == "":
-                try:
-                    break_nl = True
-                    gameboy.cpu.step(not continue_running)
-                    if continue_running:
-                        sys.stdout.write("%-78s\r" % gameboy.cpu.prev_inst)
-                        sys.stdout.flush()
-                except Exception as e:
-                    log("\n\n*** Exception: %s" % e)
-                    continue_running = False
-            elif command.startswith("l"):
+                continue
+
+            if command.startswith("l"):
                 start = gameboy.cpu.PC
                 code = gameboy.cpu.memory[start:start+16]
                 try:
                     disassemble(code, start_address=start)
                 except IndexError:
                     log("...")
-            else:
-                log("Unknown command")
+                continue
+
+            log("Unknown command")
         except KeyboardInterrupt:
             log("")
             break_nl = False

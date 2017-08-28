@@ -77,3 +77,8 @@ hardware I/O registers.
 
 Started implementing the video display driver. Currently, it just draws
 rubbish, but at least something is happening!
+
+Day 5
+-----
+
+Did the video thing incorrectly. Started on a correct one.
