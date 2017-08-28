@@ -48,7 +48,11 @@ class Memory(object):
         return len(self.data)
 
     def __getitem__(self, index):
-        return self.data[index]
+        try:
+            return self.data[index]
+        except IndexError:
+            raise IndexError("Out of range address 0x%0.4x for %r" % (index,
+                self.name))
 
     def __setitem__(self, index, value):
         if self.readonly:
