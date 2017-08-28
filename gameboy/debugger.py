@@ -91,21 +91,20 @@ class Debugger(object):
         elif c == "l":
             address = self.PC
             length = 16
-            if len(args) > 2:
+            if len(args) > 0:
                 try:
-                    length = parse_number(arg[1])
+                    address = parse_number(args[0])
                 except ValueError as e:
                     log(e)
                     return
 
             if len(args) > 1:
                 try:
-                    self.disassemble(parse_number(arg), length)
+                    length = parse_number(args[1])
                 except ValueError as e:
                     log(e)
                     return
-            else:
-                self.disassemble(self.PC)
+            self.disassemble(address, length)
         else:
             log("Unknown command: %s" % command)
             return
