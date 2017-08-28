@@ -174,7 +174,10 @@ class CPU(object):
         if self.start is None:
             return 0
         else:
-            cps = self.total_cycles / (time.clock() - self.start)
+            elapsed = (time.clock() - self.start)
+            if elapsed == 0:
+                return 0
+            cps = self.total_cycles / elapsed
             return cps / 1000000.0
 
     def print_registers(self):
