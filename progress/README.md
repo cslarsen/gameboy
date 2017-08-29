@@ -81,4 +81,17 @@ rubbish, but at least something is happening!
 Day 5
 -----
 
-Did the video thing incorrectly. Started on a correct one.
+Did the video thing incorrectly. Started on a (more) correct one. Figured out more
+about how to stich background tiles, and was able to render a recognizable,
+albeit broken, Nintendo logo:
+
+![Broken Nintendo logo](boot-screen-01.png)
+
+The window shows the entire 256x256 pixel display area, while the green box
+displays what will be visible on the actual LCD screen. The red pixels show the
+upper left corner of each tile. I'm not sure what's wrong with this, but since
+the circled "registered" mark is correct, I suspect some incorrectly
+implemented opcodes.
+
+The cool thing is that the green box moves upward, clearly showing how the logo
+will scroll down on the LCD screen.

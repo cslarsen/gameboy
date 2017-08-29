@@ -9,8 +9,8 @@ Status
 
 This is *not yet* a working version.
 
-I'm just pushing to this repo as the project proceeds. See the file
-[PROGRESS.md](PROGRESS.md) for a few notes.
+I'm just pushing to this repo as the project proceeds. See the [progress
+log](progress/README.md) for a few notes.
 
 Usage
 =====
