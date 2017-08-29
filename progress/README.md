@@ -97,7 +97,7 @@ The cool thing is that the green box moves upward, clearly showing how the logo
 will scroll down on the LCD screen.
 
 Here's also a view of the debugger. Here I break when the program counter is at
-0x0059, which is the loop where the boot code scrolls the background.
+0x0059, which is where the scrolling loop is set up.
 
 ![Example debugging session](debugger-01.png)
 
