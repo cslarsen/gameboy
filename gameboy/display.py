@@ -115,7 +115,7 @@ class Display(object):
         except Exception as e:
             log("Cannot open host display: %s" % e)
 
-        self.window.clear(0x008855)
+        self.window.clear(0x474741)
 
     def palette_to_rgb(self, color):
         """Converts GameBoy palette color to a 24-bit RGB value."""
@@ -223,14 +223,14 @@ class Display(object):
         return (self._LCDCONT & (1<<7)) !=0
 
     @property
-    def tile_data_address(self):
-        if (self._LCDCONT & (1<<4)) == 0:
+    def tile_table_address(self):
+        if (self._LCDCONT & (1<<3)) == 0:
             return 0x9800
         else:
             return 0x9c00
 
     @property
-    def tile_table_address(self):
+    def tile_data_address(self):
         if (self._LCDCONT & (1<<4)) == 0:
             return 0x8800
         else:
