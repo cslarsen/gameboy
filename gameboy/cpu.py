@@ -293,7 +293,8 @@ class CPU(object):
             if opcode == 0x11: # RL C
                 carry = (self.C & (1<<7)) >> 7
                 self.C = (self.C << 1) % 0xff
-                zero = self.C == 0
+                self.C |= self.C_flag
+                zero = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
                 zero = not (self.H & (1<<7))
             else:
@@ -398,10 +399,8 @@ class CPU(object):
             elif opcode == 0x17: # RLA
                 carry = (self.A & (1<<7)) >> 7
                 self.A = (self.A << 1) % 0xff
-                if self.A == 0:
-                    zero = True
-                else:
-                    zero = False
+                self.A |= self.C_flag
+                zero = (self.A == 0)
 
             elif opcode == 0x1a: # LD A, (DE)
                 self.A = self.memory[self.DE]
