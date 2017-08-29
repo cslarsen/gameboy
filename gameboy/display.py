@@ -166,18 +166,15 @@ class Display(object):
 
     def render_background(self):
         # Read the tile table
-        tile_table_address, tta_end = self.tile_table_address
+        table = self.tile_table_address
 
-        if tile_table_address == 0x8800:
-            signed = True
-        else:
-            signed = False
+        # Tile bitmap data
+        data = self.tile_data_address
+        signed = data == 0x9c00
 
         xpos, ypos = 0, 0
-        for index in range(32*32):
-            # TODO: Find out if its signed or unsigned mode and adjust
-            # starting address based on that
-            tile_number = self.ram[tile_table_address - self.ram.offset + index]
+        for tile_index in range(32*32):
+            tile_number = self.ram[table + tile_index - self.ram.offset]
             if signed:
                 tile_number = u8_to_signed(tile_number)
 
@@ -185,9 +182,9 @@ class Display(object):
             # meaning 16 bytes of memory
             bitmap = []
             line = []
-            tile_data_start, tile_data_end = self.tile_data_address
+
             for n in range(16):
-                byte = self.ram[tile_data_start - self.ram.offset + n]
+                byte = self.ram[data + tile_number*8 + n - self.ram.offset]
                 pix1 = (byte & 0b11000000) >> 6
                 pix2 = (byte & 0b00110000) >> 4
                 pix3 = (byte & 0b00001100) >> 2
@@ -228,16 +225,16 @@ class Display(object):
     @property
     def tile_data_address(self):
         if (self._LCDCONT & (1<<4)) == 0:
-            return 0x9800, 0x9bff
+            return 0x9800
         else:
-            return 0x9c00, 0x9fff
+            return 0x9c00
 
     @property
     def tile_table_address(self):
         if (self._LCDCONT & (1<<4)) == 0:
-            return 0x8800, 0x97ff
+            return 0x8800
         else:
-            return 0x8000, 0x8fff
+            return 0x8000
 
     @property
     def background_display(self):
