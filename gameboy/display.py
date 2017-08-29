@@ -123,7 +123,7 @@ class Display(object):
         return self.palette.get(color, color_for_bugs)
 
     def put_pixel(self, x, y, color):
-        assert(color < 4)
+        #assert(color < 4)
         self.window.put(x, y, self.palette_to_rgb(color))
 
     def inc_ly(self):
@@ -183,17 +183,24 @@ class Display(object):
             bitmap = []
             line = []
 
-            for n in range(16):
-                byte = self.ram[data + tile_number*16 + n - self.ram.offset]
-                pix1 = (byte & 0b11000000) >> 6
-                pix2 = (byte & 0b00110000) >> 4
-                pix3 = (byte & 0b00001100) >> 2
-                pix4 = (byte & 0b00000011) >> 0
-                line += [pix1, pix2, pix3, pix4]
-                if len(line) == 8:
-                    bitmap.append(line)
-                    line = []
+            n = 0
+            while n < 16:
+                b1 = self.ram[data + tile_number*16 + n - self.ram.offset]
+                b2 = self.ram[data + tile_number*16 + n + 1 - self.ram.offset]
+                n += 2
 
+                p1 = ((b1 & 0b00000001) >> 0) | ((b2 & 0b00000001) << 1)
+                p2 = ((b1 & 0b00000010) >> 1) | ((b2 & 0b00000010) >> 0)
+                p3 = ((b1 & 0b00000100) >> 2) | ((b2 & 0b00000100) >> 1)
+                p4 = ((b1 & 0b00001000) >> 3) | ((b2 & 0b00001000) >> 2)
+                p5 = ((b1 & 0b00010000) >> 4) | ((b2 & 0b00010000) >> 3)
+                p6 = ((b1 & 0b00100000) >> 5) | ((b2 & 0b00100000) >> 4)
+                p7 = ((b1 & 0b01000000) >> 6) | ((b2 & 0b01000000) >> 5)
+                p8 = ((b1 & 0b10000000) >> 7) | ((b2 & 0b10000000) >> 6)
+
+                bitmap.append([p8, p7, p6, p5, p4, p3, p2, p1])
+
+            bitmap[0][0] = 999
             # Draw bitmap on virtual display
             for y in range(len(bitmap)):
                 line = bitmap[y]
