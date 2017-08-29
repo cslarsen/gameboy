@@ -93,6 +93,11 @@ class Debugger(object):
             start = number(args, 0, 0)
             end = number(args, 1, start+8)
             self.dump_memory(start, end)
+        elif c == "z":
+            addr = number(args, 0, None)
+            val = number(args, 1, 0)
+            if addr is not None:
+                self.gameboy.memory[addr] = val
         elif c == "l":
             address = self.PC
             length = 16
@@ -168,6 +173,7 @@ class Debugger(object):
         log("  q or ctrl+d: quit")
         log("  r: show registers")
         log("  s: step debug (run next instruction)")
+        log("  z address [value]: Set memory location to value (default zero)")
         log("")
         log("All numbers can be written in decimal, binary or hexadecimal: 123 0x7b $7b")
         log("0b1111011")
