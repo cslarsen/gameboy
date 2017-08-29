@@ -30,6 +30,9 @@ class DummyDisplay(object):
     def clear(self, color):
         pass
 
+    def box(self, x, y, w, h):
+        pass
+
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
     def __init__(self, title):
@@ -53,6 +56,10 @@ class HostDisplay(object):
                 raise StopIteration("SDL quit")
 
     def put(self, x, y, color):
+        if not (0 <= x <= self.width):
+            raise ValueError("x outside of [0, %d]: %d" % (self.width, x))
+        if not (0 <= y <= self.height):
+            raise ValueError("y outside of [0, %d]: %d" % (self.height, y))
         self.buffer[x][y] = color
 
     def update(self):
@@ -62,6 +69,15 @@ class HostDisplay(object):
         for y in range(self.height):
             for x in range(self.width):
                 self.put(x, y, color)
+
+    def box(self, x, y, w, h):
+        c = 0x00cc44
+        for xp in range(w):
+            self.put(x+xp, y, c)
+            self.put(x+xp, y+h, c)
+        for yp in range(h):
+            self.put(x, y+yp, c)
+            self.put(x+w, y+yp, c)
 
 class Display(object):
     """The GameBoy display system."""
@@ -137,8 +153,11 @@ class Display(object):
             self.read_palette()
 
             if self.LY < self.height:
-                if self.background_display:
+                if self.background_display and self.LY == 0:
+                    # Only draw when LY==0 to make it faster. Later on, we will
+                    # only render one scanline at a time.
                     self.render_background()
+                    self.window.box(self.SCX, self.SCY, self.width, self.height)
             else:
                 # Vertical blank period
                 pass
