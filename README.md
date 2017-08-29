@@ -48,6 +48,7 @@ References
   * [Gameboy CPU (LR35902) instruction set](http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
   * [Gameboy on Wikipedia](https://en.wikipedia.org/wiki/Game_Boy)
   * [GameBoy Programming Info](https://fms.komkon.org/GameBoy/Tech/Software.html)
+  * [GameBoy Programming Manual](http://www.chrisantonellis.com/files/gameboy/gb-programming-manual.pdf)
   * [Pan Docs](http://bgb.bircd.org/pandocs.htm#cpuinstructionset)
   * [The Game Boy Project](http://marc.rawer.de/Gameboy/Docs/GBProject.pdf)
 
