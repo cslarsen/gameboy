@@ -1,6 +1,7 @@
+import argparse
+import logging
 import os
 import sys
-import argparse
 
 from __init__ import __copyright__
 from cartridge import Cartridge
@@ -96,4 +97,6 @@ def main():
                 raise
 
 if __name__ == "__main__":
+    logger = logging.getLogger('my-logger')
+    logger.propagate = False
     main()
