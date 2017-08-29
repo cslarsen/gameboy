@@ -170,7 +170,7 @@ class Display(object):
 
         # Tile bitmap data
         data = self.tile_data_address
-        signed = data == 0x9c00
+        signed = table == 0x9c00
 
         xpos, ypos = 0, 0
         for tile_index in range(32*32):
@@ -184,13 +184,12 @@ class Display(object):
             line = []
 
             for n in range(16):
-                byte = self.ram[data + tile_number*8 + n - self.ram.offset]
+                byte = self.ram[data + tile_number*16 + n - self.ram.offset]
                 pix1 = (byte & 0b11000000) >> 6
                 pix2 = (byte & 0b00110000) >> 4
                 pix3 = (byte & 0b00001100) >> 2
                 pix4 = (byte & 0b00000011) >> 0
                 line += [pix1, pix2, pix3, pix4]
-                # TODO: Use BGPAL
                 if len(line) == 8:
                     bitmap.append(line)
                     line = []
