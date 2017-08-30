@@ -33,11 +33,8 @@ To use with pypy, install PySDL2 and a version of numpy that works:
     $ pypy -m pip install PySDL2
     $ pypy -m pip install git+https://bitbucket.org/pypy/numpy.git
 
-For me, I'm not able to run numpy with pypy, but if I disable SDL2, the
-emulated speed is 5 MHz, so it should in theory be possibly to run the emulator
-in real time speed. On the same machine, Python 2.7 will emulate at only 0.6
-MHz. This is unoptimized code, of course. First make it correct, then make it
-fast.
+This works for me, but pypy doesn't really speed anything up that much at the
+moment. Anyway, the code is entirely unoptimized at this stage.
 
 References
 ==========

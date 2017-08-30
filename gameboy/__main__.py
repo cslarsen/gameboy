@@ -103,4 +103,8 @@ def main():
 if __name__ == "__main__":
     logger = logging.getLogger('my-logger')
     logger.propagate = False
-    main()
+
+    try:
+        main()
+    except StopIteration:
+        pass

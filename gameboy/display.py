@@ -10,31 +10,6 @@ from util import (
     u8_to_signed,
 )
 
-class DummyDisplay(object):
-    """A display in case you don't want one or can have one.
-
-    E.g. you're on PyPy and don't have SDL, or you're just debugging.
-    """
-    def __init__(self, title, zoom=1):
-        self.zoom = zoom
-        self.width = 256
-        self.height = 256
-
-    def pump_events(self):
-        pass
-
-    def put(self, x, y, color):
-        pass
-
-    def update(self):
-        pass
-
-    def clear(self, color):
-        pass
-
-    def box(self, x, y, w, h):
-        pass
-
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
     def __init__(self, title, zoom=1):
@@ -46,12 +21,11 @@ class HostDisplay(object):
 
         self.window = sdl2.ext.Window(title=title, size=(self.width*self.zoom,
             self.height*self.zoom))
-        self.window.show()
 
-        # TODO: Only display 160x144 pixels, but have a back buffer with
-        # 256x256
-        self.surface = self.window.get_surface()
-        self.buffer = sdl2.ext.pixels2d(self.surface)
+        # Use SDL2 hardware acceleration
+        self.renderer = sdl2.ext.Renderer(self.window,
+                flags = sdl2.SDL_RENDERER_ACCELERATED
+                      | sdl2.SDL_RENDERER_PRESENTVSYNC)
 
     def pump_events(self):
         events = sdl2.ext.get_events()
@@ -60,38 +34,25 @@ class HostDisplay(object):
                 raise StopIteration("SDL quit")
 
     def put(self, x, y, color):
-        if self.zoom == 1:
-            self.buffer[x][y] = color
-            return
-
-        if not (0 <= x <= self.width):
-            raise ValueError("x outside of [0, %d]: %d" % (self.width, x))
-        if not (0 <= y <= self.height):
-            raise ValueError("y outside of [0, %d]: %d" % (self.height, y))
-
-        x *= self.zoom
-        y *= self.zoom
-
-        for ix in range(x, x+self.zoom):
-            for iy in range(y, y+self.zoom):
-                self.buffer[ix][iy] = color
+        self.renderer.draw_point((x,y), color)
 
     def line(self, color, x1, y1, x2, y2):
-        sdl2.ext.draw.line(self.surface, color, (x1, y1, x2, y2))
+        self.renderer.draw_line((x1, y1, x2, y2), color)
+
+    def show(self):
+        self.window.show()
 
     def update(self):
-        self.window.refresh()
+        self.renderer.present()
 
     def clear(self, color):
-        for y in range(self.height):
-            for x in range(self.width):
-                self.put(x, y, color)
+        self.renderer.clear(color)
 
     def box(self, x, y, w, h):
         c = 0x00cc44
         self.line(c, x, y, x+w, y)
         self.line(c, x, y+h, x+w, y+h)
-        self.line(c, x, y+h, x, y+h)
+        self.line(c, x, y, x, y+h)
         self.line(c, x+w, y, x+w, y+h)
 
 class Display(object):
@@ -124,8 +85,10 @@ class Display(object):
         self.width = 160
         self.height = 144
 
-        self.window = DummyDisplay("GameBoy")
-        self._setup_host_display(no_display, zoom)
+        self.window = HostDisplay("GameBoy", zoom=zoom)
+        self.window.show()
+        self.window.clear(0x474741)
+        self.window.update()
 
         self.palette = {
             0: 0xffffff,
@@ -133,23 +96,6 @@ class Display(object):
             2: 0x555555,
             3: 0x000000,
         }
-
-    def _setup_host_display(self, no_display, zoom):
-        if no_display:
-            return
-
-        try:
-            import numpy # required by SDL2
-        except ImportError as e:
-            log("Disabling display, needs numpy: %s" % e)
-            return
-
-        try:
-            self.window = self.window = HostDisplay("GameBoy", zoom=zoom)
-        except Exception as e:
-            log("Cannot open host display: %s" % e)
-
-        self.window.clear(0x474741)
 
     def palette_to_rgb(self, color):
         """Converts GameBoy palette color to a 24-bit RGB value."""
@@ -163,31 +109,41 @@ class Display(object):
     def inc_ly(self):
         self.LY = (self.LY + 1) % 0x100
 
+    def show_viewport(self):
+        """Marks viewable area"""
+        self.window.box(self.SCX, self.SCY, self.width, self.height)
+
+    def calc_fps(self):
+        now = time.clock()
+        elapsed = now - self.start
+        if elapsed < 1:
+            return
+
+        self.start = now
+        self.measured_fps.append(1.0/elapsed)
+        counts = 3
+
+        if len(self.measured_fps) > counts:
+            self.measured_fps = self.measured_fps[-counts:]
+            avg_fps = sum(self.measured_fps) / float(len(self.measured_fps))
+            avg_spf = 1.0/avg_fps
+            log("avg %.2f fps (%.2fs per frame)\r" % (avg_fps, avg_spf),
+                    nl=False)
+
     def step(self):
         self.window.pump_events()
 
-        # If the display is turned off, just exit
-        if self.lcd_operation:
+        if self.screen_on:
             self.read_palette()
-
-            now = time.clock()
-            elapsed = now - self.start
-            if elapsed > 1:
-                self.start = now
-                self.measured_fps.append(1.0/elapsed)
-                if len(self.measured_fps) > 3:
-                    self.measured_fps = self.measured_fps[-3:]
-                    log("avg %.2f fps\r" % (
-                        sum(self.measured_fps)/float(len(self.measured_fps))),
-                        nl=False)
-
             if self.background_display:
                 self.render_background()
-                # Show viewable area
-                self.window.box(self.SCX, self.SCY, self.width, self.height)
-            self.inc_ly()
 
-        self.window.update()
+        if self.LY == 144:
+            self.show_viewport()
+            self.window.update()
+            self.calc_fps()
+            self.window.clear(0)
+        self.inc_ly()
 
     def read_palette(self):
         colors = {
@@ -265,11 +221,11 @@ class Display(object):
     @LCDCONT.setter
     def LCDCONT(self, value):
         self._LCDCONT = value % 0xff
-        log("LCDCONT display=%s background=%s" % ("on" if self.lcd_operation
+        log("LCDCONT display=%s background=%s" % ("on" if self.screen_on
             else "off", "on" if self.background_display else "off"))
 
     @property
-    def lcd_operation(self):
+    def screen_on(self):
         return (self._LCDCONT & (1<<7)) !=0
 
     @property
