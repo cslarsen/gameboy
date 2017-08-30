@@ -142,7 +142,7 @@ class Display(object):
             self.show_viewport()
             self.window.update()
             self.calc_fps()
-            self.window.clear(0)
+            self.window.clear(0x474741)
         self.inc_ly()
 
     def read_palette(self):
