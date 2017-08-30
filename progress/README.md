@@ -101,12 +101,19 @@ Here's also a view of the debugger. Here I break when the program counter is at
 
 ![Example debugging session](debugger-01.png)
 
-Having a good debugger is essential to this task.
+Having a good debugger is essential to this task. Didn't spend much time on the
+emulator today.
 
 Day 6
 -----
 
-Didn't have time to do much last day.
+The logo is now rendered correctly!
 
-The logo is now rendered correctly! My hunch was right: The RLA and RL C
-instructions were implemented incorrectly, as well as the other flags.
+My hunch was right: I was doing flags and the RLA and RL C instructions
+incorrectly. Fixing up those produces this fine, scrolling logo:
+
+![Correctly rendered Nintendo logo](boot-screen-02.png)
+
+The problem at this moment is that the whole thing runs very slowly, the screen
+rendering being the slowest. I need to do some minimum performance
+optimizations, because the scrolling takes ages before completing.
