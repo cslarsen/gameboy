@@ -64,8 +64,8 @@ class Display(object):
         self.vblank_duration = 1.1
         self.fps = 59.7
 
-        self.measured_fps = []
-        self.start = time.clock()
+        self.frames = 0
+        self.frame_start = time.clock()
 
         # pseudo-registers
         self.LY = 0
@@ -103,11 +103,15 @@ class Display(object):
         return self.palette.get(color, color_for_bugs)
 
     def put_pixel(self, x, y, color):
-        #assert(color < 4)
         self.window.put(x, y, self.palette_to_rgb(color))
 
-    def inc_ly(self):
-        self.LY = (self.LY + 1) % 0x100
+    def ly_rollover(self):
+        """Increments LY and returns whether it rolled over."""
+        self.LY += 1
+        if self.LY == 0x100:
+            self.LY = 0
+            return True
+        return False
 
     def show_viewport(self):
         """Marks viewable area"""
@@ -115,35 +119,13 @@ class Display(object):
 
     def calc_fps(self):
         now = time.clock()
-        elapsed = now - self.start
-        if elapsed < 1:
-            return
-
-        self.start = now
-        self.measured_fps.append(1.0/elapsed)
-        counts = 3
-
-        if len(self.measured_fps) > counts:
-            self.measured_fps = self.measured_fps[-counts:]
-            avg_fps = sum(self.measured_fps) / float(len(self.measured_fps))
-            avg_spf = 1.0/avg_fps
-            log("avg %.2f fps (%.2fs per frame)\r" % (avg_fps, avg_spf),
-                    nl=False)
-
-    def step(self):
-        self.window.pump_events()
-
-        if self.screen_on:
-            self.read_palette()
-            if self.background_display:
-                self.render_background()
-
-        if self.LY == 144:
-            self.show_viewport()
-            self.window.update()
-            self.calc_fps()
-            self.window.clear(0x474741)
-        self.inc_ly()
+        elapsed = now - self.frame_start
+        if self.frames > 5 and elapsed > 2:
+            fps = float(self.frames) / elapsed
+            spf = 1.0 / fps
+            log("%.2f fps / %.2f spf\r" % (fps, spf))
+            self.frame_start = now
+            self.frames = 0
 
     def read_palette(self):
         colors = {
@@ -163,56 +145,74 @@ class Display(object):
         self.palette[2] = colors[col2]
         self.palette[3] = colors[col3]
 
-    def render_background(self):
+    def render_background_scanline(self, y):
         # Read the tile table
-        table = self.tile_table_address
+        bitmap = self.tile_data_address - self.ram.offset
+        table, signed = self.tile_table_address
+        table -= self.ram.offset
 
-        # Tile bitmap data
-        data = self.tile_data_address
-        signed = table == 0x9c00
+        # Draw one scanline from the tiles. We do this by calculating the tile
+        # index and y-position
 
-        xpos, ypos = 0, 0
-        for tile_index in range(32*32):
-            if ypos == self.LY: # poor man's scanline drawing (fix later)
-                tile_number = self.ram[table + tile_index - self.ram.offset]
-                if signed:
-                    tile_number = u8_to_signed(tile_number)
+        # For the given y line, find which tile number it is when the screen is
+        # divided up in 32x32 tiles that are 8x8 pixels each.
+        ypos = y & 0b11111000
+        index_offset = ypos << 2
 
-                # Get the tile bitmap; 8x8 pixels stored as 2-bit colors
-                # meaning 16 bytes of memory
-                bitmap = []
-                line = []
+        # Position whithin this tile
+        yoff = y - ypos
+        bitmap += yoff*2
 
-                n = 0
-                while n < 16:
-                    b1 = self.ram[data + tile_number*16 + n - self.ram.offset]
-                    b2 = self.ram[data + tile_number*16 + n + 1 - self.ram.offset]
-                    n += 2
+        handle_sign = u8_to_signed if signed else lambda x: x
 
-                    p1 = ((b1 & 0b00000001) >> 0) | ((b2 & 0b00000001) << 1)
-                    p2 = ((b1 & 0b00000010) >> 1) | ((b2 & 0b00000010) >> 0)
-                    p3 = ((b1 & 0b00000100) >> 2) | ((b2 & 0b00000100) >> 1)
-                    p4 = ((b1 & 0b00001000) >> 3) | ((b2 & 0b00001000) >> 2)
-                    p5 = ((b1 & 0b00010000) >> 4) | ((b2 & 0b00010000) >> 3)
-                    p6 = ((b1 & 0b00100000) >> 5) | ((b2 & 0b00100000) >> 4)
-                    p7 = ((b1 & 0b01000000) >> 6) | ((b2 & 0b01000000) >> 5)
-                    p8 = ((b1 & 0b10000000) >> 7) | ((b2 & 0b10000000) >> 6)
+        # The background consists of 32x32 tiles, so find the tile index.
+        x = 0
+        index = 0
 
-                    bitmap.append([p8, p7, p6, p5, p4, p3, p2, p1])
+        while index < 32:
+            tile = handle_sign(self.ram[table + index_offset + index])
 
-                bitmap[0][0] = 999
-                # Draw bitmap on virtual display
-                for y in range(len(bitmap)):
-                    line = bitmap[y]
-                    for x in range(len(line)):
-                        color = line[x]
-                        self.put_pixel(x + xpos, y + ypos, color)
-            xpos += 8
-            if xpos == self.window.width:
-                xpos = 0
-                ypos += 8
-                if ypos == 256:
-                    break
+            a = self.ram[bitmap + tile*16]
+            b = self.ram[bitmap + tile*16 + 1]
+
+            p8 = ((a & 0b00000001) >> 0) | ((b & 0b00000001) << 1)
+            p7 = ((a & 0b00000010) >> 1) | ((b & 0b00000010) >> 0)
+            p6 = ((a & 0b00000100) >> 2) | ((b & 0b00000100) >> 1)
+            p5 = ((a & 0b00001000) >> 3) | ((b & 0b00001000) >> 2)
+            p4 = ((a & 0b00010000) >> 4) | ((b & 0b00010000) >> 3)
+            p3 = ((a & 0b00100000) >> 5) | ((b & 0b00100000) >> 4)
+            p2 = ((a & 0b01000000) >> 6) | ((b & 0b01000000) >> 5)
+            p1 = ((a & 0b10000000) >> 7) | ((b & 0b10000000) >> 6)
+
+            self.put_pixel(x+0, y, p1)
+            self.put_pixel(x+1, y, p2)
+            self.put_pixel(x+2, y, p3)
+            self.put_pixel(x+3, y, p4)
+            self.put_pixel(x+4, y, p5)
+            self.put_pixel(x+5, y, p6)
+            self.put_pixel(x+6, y, p7)
+            self.put_pixel(x+7, y, p8)
+
+            x += 8
+            index += 1
+
+    def step(self):
+        """Renders one scanline."""
+        self.window.pump_events()
+
+        if not self.screen_on:
+            return
+
+        if self.background_display:
+            self.read_palette()
+            self.render_background_scanline(self.LY)
+
+        if self.ly_rollover():
+            self.show_viewport()
+            self.window.update()
+            self.frames += 1
+            self.calc_fps()
+            self.window.clear(0x474741)
 
     @property
     def LCDCONT(self):
@@ -230,10 +230,11 @@ class Display(object):
 
     @property
     def tile_table_address(self):
+        """Returns current tile table address and whether it is signed."""
         if (self._LCDCONT & (1<<3)) == 0:
-            return 0x9800
+            return 0x9800, False
         else:
-            return 0x9c00
+            return 0x9c00, True
 
     @property
     def tile_data_address(self):
