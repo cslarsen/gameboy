@@ -41,6 +41,9 @@ def parse_command_line_args():
     p.add_argument("--no-display", default=False, action="store_true",
             help="Do not open a 2D display window")
 
+    p.add_argument("--zoom", default=1, type=int,
+            help="Zoom factor for display")
+
     opt = p.parse_args()
 
     if isinstance(opt.start_address, str):
@@ -79,7 +82,8 @@ def main():
         log(cartridge)
 
         log("Booting Gameboy")
-        gameboy = Gameboy(cartridge, boot, no_display=opt.no_display)
+        gameboy = Gameboy(cartridge, boot, no_display=opt.no_display,
+                zoom=opt.zoom)
 
         if opt.debug:
             Debugger(gameboy).run()

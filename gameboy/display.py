@@ -14,7 +14,8 @@ class DummyDisplay(object):
 
     E.g. you're on PyPy and don't have SDL, or you're just debugging.
     """
-    def __init__(self, title):
+    def __init__(self, title, zoom=1):
+        self.zoom = zoom
         self.width = 256
         self.height = 256
 
@@ -35,14 +36,15 @@ class DummyDisplay(object):
 
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
-    def __init__(self, title):
+    def __init__(self, title, zoom=1):
+        self.zoom = zoom
         self.width = 256
         self.height = 256
 
         sdl2.ext.init()
 
-        self.window = sdl2.ext.Window(title=title, size=(self.width,
-            self.height))
+        self.window = sdl2.ext.Window(title=title, size=(self.width*self.zoom,
+            self.height*self.zoom))
         self.window.show()
 
         # TODO: Only display 160x144 pixels, but have a back buffer with
@@ -60,7 +62,13 @@ class HostDisplay(object):
             raise ValueError("x outside of [0, %d]: %d" % (self.width, x))
         if not (0 <= y <= self.height):
             raise ValueError("y outside of [0, %d]: %d" % (self.height, y))
-        self.buffer[x][y] = color
+
+        x *= self.zoom
+        y *= self.zoom
+
+        for ix in range(x, x+self.zoom):
+            for iy in range(y, y+self.zoom):
+                self.buffer[ix][iy] = color
 
     def update(self):
         self.window.refresh()
@@ -81,7 +89,7 @@ class HostDisplay(object):
 
 class Display(object):
     """The GameBoy display system."""
-    def __init__(self, no_display=False):
+    def __init__(self, no_display=False, zoom=1):
         self.ram = Memory(0x2000, offset=0x8000, randomized=True,
                 name="Display RAM")
 
@@ -107,7 +115,7 @@ class Display(object):
         self.height = 144
 
         self.window = DummyDisplay("GameBoy")
-        self._setup_host_display(no_display)
+        self._setup_host_display(no_display, zoom)
 
         self.palette = {
             0: 0xffffff,
@@ -116,7 +124,7 @@ class Display(object):
             3: 0x000000,
         }
 
-    def _setup_host_display(self, no_display):
+    def _setup_host_display(self, no_display, zoom):
         if no_display:
             return
 
@@ -127,7 +135,7 @@ class Display(object):
             return
 
         try:
-            self.window = self.window = HostDisplay("GameBoy")
+            self.window = self.window = HostDisplay("GameBoy", zoom=zoom)
         except Exception as e:
             log("Cannot open host display: %s" % e)
 
