@@ -102,3 +102,9 @@ Here's also a view of the debugger. Here I break when the program counter is at
 ![Example debugging session](debugger-01.png)
 
 Having a good debugger is essential to this task.
+
+Day 6
+-----
+
+Didn't have time to do much last day. Added a zoom option. Pixel processing in
+pure Python is slow.
