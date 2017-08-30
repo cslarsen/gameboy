@@ -13,19 +13,19 @@ from util import (
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
     def __init__(self, title, zoom=1):
-        self.zoom = zoom
         self.width = 256
         self.height = 256
 
         sdl2.ext.init()
 
-        self.window = sdl2.ext.Window(title=title, size=(self.width*self.zoom,
-            self.height*self.zoom))
+        self.window = sdl2.ext.Window(title=title, size=(self.width*zoom,
+            self.height*zoom))
 
         # Use SDL2 hardware acceleration
         self.renderer = sdl2.ext.Renderer(self.window,
-                flags = sdl2.SDL_RENDERER_ACCELERATED
-                      | sdl2.SDL_RENDERER_PRESENTVSYNC)
+                logical_size=(self.width, self.height),
+                flags = sdl2.SDL_RENDERER_ACCELERATED |
+                        sdl2.SDL_RENDERER_PRESENTVSYNC)
 
     def pump_events(self):
         events = sdl2.ext.get_events()
@@ -118,8 +118,11 @@ class Display(object):
         self.window.box(self.SCX, self.SCY, self.width, self.height)
 
     def calc_fps(self):
+        self.frames += 1
+
         now = time.clock()
         elapsed = now - self.frame_start
+
         if self.frames > 5 and elapsed > 2:
             fps = float(self.frames) / elapsed
             spf = 1.0 / fps
@@ -210,7 +213,6 @@ class Display(object):
         if self.ly_rollover():
             self.show_viewport()
             self.window.update()
-            self.frames += 1
             self.calc_fps()
             self.window.clear(0x474741)
 
