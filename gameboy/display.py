@@ -23,7 +23,7 @@ class HostDisplay(object):
 
         # Use SDL2 hardware acceleration
         self.renderer = sdl2.ext.Renderer(self.window,
-                logical_size=(self.width, self.height),
+                logical_size = (self.width, self.height),
                 flags = sdl2.SDL_RENDERER_ACCELERATED |
                         sdl2.SDL_RENDERER_PRESENTVSYNC)
 
@@ -50,10 +50,7 @@ class HostDisplay(object):
 
     def box(self, x, y, w, h):
         c = 0x00cc44
-        self.line(c, x, y, x+w, y)
-        self.line(c, x, y+h, x+w, y+h)
-        self.line(c, x, y, x, y+h)
-        self.line(c, x+w, y, x+w, y+h)
+        self.renderer.draw_line([x,y,x+w,y,x+w,y+h,x,y+h,x,y], c)
 
 class Display(object):
     """The GameBoy display system."""
