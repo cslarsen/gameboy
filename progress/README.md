@@ -106,5 +106,7 @@ Having a good debugger is essential to this task.
 Day 6
 -----
 
-Didn't have time to do much last day. Added a zoom option. Pixel processing in
-pure Python is slow.
+Didn't have time to do much last day.
+
+The logo is now rendered correctly! My hunch was right: The RLA and RL C
+instructions were implemented incorrectly, as well as the other flags.

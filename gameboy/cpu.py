@@ -57,22 +57,6 @@ class CPU(object):
         # Save last fully decoded instruction for errors
         self.prev_inst = ""
 
-    @property
-    def zero_flagged(self):
-        return (self.flags & 7) != 0
-
-    @property
-    def subtract_flagged(self):
-        return (self.flags & 6) != 0
-
-    @property
-    def half_carry_flagged(self):
-        return (self.flags & 5) != 0
-
-    @property
-    def carry_flagged(self):
-        return (self.flags & 4) != 0
-
     def fetch(self):
         opcode = self.memory[self.PC]
         return opcode
@@ -185,8 +169,13 @@ class CPU(object):
         print("pc=$%0.4x sp=$%0.4x a=$%0.2x b=$%0.2x c=$%0.2x d=$%0.2x e=$%0.2x f=$%0.1x h=$%0.2x l=$%0.2x" %
                 (self.PC, self.SP, self.A, self.B, self.C, self.D, self.E,
                     self.F, self.H, self.L))
-        print("flags=%s cycles=%d ~%.1f MHz" % (format_bin(self.F),
-            self.total_cycles, self.emulated_MHz))
+
+        flags = "%s%s%s%s" % ("Z" if self.Z_flag else "-",
+                "N" if self.N_flag else "-",
+                "H" if self.H_flag else "-",
+                "C" if self.C_flag else "-")
+        print("flags=%s cycles=%d ~%.1f MHz" % (flags, self.total_cycles,
+            self.emulated_MHz))
 
     @property
     def HL(self):
@@ -215,50 +204,50 @@ class CPU(object):
     @property
     def Z_flag(self):
         """The zero flag."""
-        return (self.F & (1<<7)) >> 6
+        return (self.F & 0b10000000) >> 7
 
     @Z_flag.setter
     def Z_flag(self, value):
-        if not value:
-            self.F &= ~(1<<7)
-        else:
+        if value:
             self.F |= 1<<7
+        else:
+            self.F &= ~(1<<7)
 
     @property
     def N_flag(self):
         """The subtract flag."""
-        return (self.F & (1<<6)) >> 5
+        return (self.F & 0b01000000) >> 6
 
     @N_flag.setter
     def N_flag(self, value):
-        if not value:
-            self.F &= ~(1<<6)
-        else:
+        if value:
             self.F |= 1<<6
+        else:
+            self.F &= ~(1<<6)
 
     @property
     def H_flag(self):
         """The half carry flag"""
-        return (self.F & (1<<5)) >> 4
+        return (self.F & 0b00100000) >> 5
 
     @H_flag.setter
     def H_flag(self, value):
-        if not value:
-            self.F &= ~(1<<5)
-        else:
+        if value:
             self.F |= 1<<5
+        else:
+            self.F &= ~(1<<5)
 
     @property
     def C_flag(self):
         """The carry flag"""
-        return (self.F & (1<<4)) >>3
+        return (self.F & 0b00010000) >> 4
 
     @C_flag.setter
     def C_flag(self, value):
-        if not value:
-            self.F &= ~(1<<3)
+        if value:
+            self.F |= 1<<4
         else:
-            self.F |= 1<<3
+            self.F &= ~(1<<4)
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         # TODO: By changing the opcodes struct, we can do this programmatically
@@ -292,7 +281,7 @@ class CPU(object):
         if raw[0] == 0xcb: # PREFIX CB
             if opcode == 0x11: # RL C
                 carry = (self.C & (1<<7)) >> 7
-                self.C = (self.C << 1) % 0xff
+                self.C = (self.C << 1) & 0xff
                 self.C |= self.C_flag
                 zero = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
@@ -300,6 +289,11 @@ class CPU(object):
             else:
                 raise unknown_opcode()
         else:
+            # TODO: See the official Nintendo manual. Instructions can be
+            # grouped much better. For example, all load instructions start
+            # with bits 01, then the next three bits is destination register
+            # (e.g. A=0b111) then the source register is the three last bits,
+            # from a table. Makes dispatching much faster as well.
             if opcode == 0x00: # NOP
                 pass
 
@@ -398,7 +392,7 @@ class CPU(object):
 
             elif opcode == 0x17: # RLA
                 carry = (self.A & (1<<7)) >> 7
-                self.A = (self.A << 1) % 0xff
+                self.A = (self.A << 1) & 0xff
                 self.A |= self.C_flag
                 zero = (self.A == 0)
 
