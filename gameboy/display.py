@@ -1,6 +1,6 @@
 import sdl2
 import sdl2.ext
-import sys
+import sdl2.ext.draw
 import time
 
 from memory import Memory
@@ -50,7 +50,8 @@ class HostDisplay(object):
 
         # TODO: Only display 160x144 pixels, but have a back buffer with
         # 256x256
-        self.buffer = sdl2.ext.pixels2d(self.window.get_surface())
+        self.surface = self.window.get_surface()
+        self.buffer = sdl2.ext.pixels2d(self.surface)
 
     def pump_events(self):
         events = sdl2.ext.get_events()
@@ -59,6 +60,10 @@ class HostDisplay(object):
                 raise StopIteration("SDL quit")
 
     def put(self, x, y, color):
+        if self.zoom == 1:
+            self.buffer[x][y] = color
+            return
+
         if not (0 <= x <= self.width):
             raise ValueError("x outside of [0, %d]: %d" % (self.width, x))
         if not (0 <= y <= self.height):
@@ -71,6 +76,9 @@ class HostDisplay(object):
             for iy in range(y, y+self.zoom):
                 self.buffer[ix][iy] = color
 
+    def line(self, color, x1, y1, x2, y2):
+        sdl2.ext.draw.line(self.surface, color, (x1, y1, x2, y2))
+
     def update(self):
         self.window.refresh()
 
@@ -81,12 +89,10 @@ class HostDisplay(object):
 
     def box(self, x, y, w, h):
         c = 0x00cc44
-        for xp in range(w):
-            self.put(x+xp, y, c)
-            self.put(x+xp, y+h, c)
-        for yp in range(h):
-            self.put(x, y+yp, c)
-            self.put(x+w, y+yp, c)
+        self.line(c, x, y, x+w, y)
+        self.line(c, x, y+h, x+w, y+h)
+        self.line(c, x, y+h, x, y+h)
+        self.line(c, x+w, y, x+w, y+h)
 
 class Display(object):
     """The GameBoy display system."""
@@ -155,7 +161,7 @@ class Display(object):
         self.window.put(x, y, self.palette_to_rgb(color))
 
     def inc_ly(self):
-        self.LY = (self.LY + 1) % self.scanlines
+        self.LY = (self.LY + 1) % 0x100
 
     def step(self):
         self.window.pump_events()
@@ -164,25 +170,21 @@ class Display(object):
         if self.lcd_operation:
             self.read_palette()
 
-            if self.LY < self.height:
-                now = time.clock()
-                elapsed = now - self.start
-                if elapsed > 1:
-                    self.start = now
-                    self.measured_fps.append(1.0/elapsed)
-                    if len(self.measured_fps) > 3:
-                        self.measured_fps = self.measured_fps[-3:]
-                        log("avg %.2f fps\r" % (
-                            sum(self.measured_fps)/float(len(self.measured_fps))),
-                            nl=False)
-                if self.background_display and self.LY == 0:
-                    # Only draw when LY==0 to make it faster. Later on, we will
-                    # only render one scanline at a time.
-                    self.render_background()
-                    self.window.box(self.SCX, self.SCY, self.width, self.height)
-            else:
-                # Vertical blank period
-                pass
+            now = time.clock()
+            elapsed = now - self.start
+            if elapsed > 1:
+                self.start = now
+                self.measured_fps.append(1.0/elapsed)
+                if len(self.measured_fps) > 3:
+                    self.measured_fps = self.measured_fps[-3:]
+                    log("avg %.2f fps\r" % (
+                        sum(self.measured_fps)/float(len(self.measured_fps))),
+                        nl=False)
+
+            if self.background_display:
+                self.render_background()
+                # Show viewable area
+                self.window.box(self.SCX, self.SCY, self.width, self.height)
             self.inc_ly()
 
         self.window.update()
@@ -215,44 +217,45 @@ class Display(object):
 
         xpos, ypos = 0, 0
         for tile_index in range(32*32):
-            tile_number = self.ram[table + tile_index - self.ram.offset]
-            if signed:
-                tile_number = u8_to_signed(tile_number)
+            if ypos == self.LY: # poor man's scanline drawing (fix later)
+                tile_number = self.ram[table + tile_index - self.ram.offset]
+                if signed:
+                    tile_number = u8_to_signed(tile_number)
 
-            # Get the tile bitmap; 8x8 pixels stored as 2-bit colors
-            # meaning 16 bytes of memory
-            bitmap = []
-            line = []
+                # Get the tile bitmap; 8x8 pixels stored as 2-bit colors
+                # meaning 16 bytes of memory
+                bitmap = []
+                line = []
 
-            n = 0
-            while n < 16:
-                b1 = self.ram[data + tile_number*16 + n - self.ram.offset]
-                b2 = self.ram[data + tile_number*16 + n + 1 - self.ram.offset]
-                n += 2
+                n = 0
+                while n < 16:
+                    b1 = self.ram[data + tile_number*16 + n - self.ram.offset]
+                    b2 = self.ram[data + tile_number*16 + n + 1 - self.ram.offset]
+                    n += 2
 
-                p1 = ((b1 & 0b00000001) >> 0) | ((b2 & 0b00000001) << 1)
-                p2 = ((b1 & 0b00000010) >> 1) | ((b2 & 0b00000010) >> 0)
-                p3 = ((b1 & 0b00000100) >> 2) | ((b2 & 0b00000100) >> 1)
-                p4 = ((b1 & 0b00001000) >> 3) | ((b2 & 0b00001000) >> 2)
-                p5 = ((b1 & 0b00010000) >> 4) | ((b2 & 0b00010000) >> 3)
-                p6 = ((b1 & 0b00100000) >> 5) | ((b2 & 0b00100000) >> 4)
-                p7 = ((b1 & 0b01000000) >> 6) | ((b2 & 0b01000000) >> 5)
-                p8 = ((b1 & 0b10000000) >> 7) | ((b2 & 0b10000000) >> 6)
+                    p1 = ((b1 & 0b00000001) >> 0) | ((b2 & 0b00000001) << 1)
+                    p2 = ((b1 & 0b00000010) >> 1) | ((b2 & 0b00000010) >> 0)
+                    p3 = ((b1 & 0b00000100) >> 2) | ((b2 & 0b00000100) >> 1)
+                    p4 = ((b1 & 0b00001000) >> 3) | ((b2 & 0b00001000) >> 2)
+                    p5 = ((b1 & 0b00010000) >> 4) | ((b2 & 0b00010000) >> 3)
+                    p6 = ((b1 & 0b00100000) >> 5) | ((b2 & 0b00100000) >> 4)
+                    p7 = ((b1 & 0b01000000) >> 6) | ((b2 & 0b01000000) >> 5)
+                    p8 = ((b1 & 0b10000000) >> 7) | ((b2 & 0b10000000) >> 6)
 
-                bitmap.append([p8, p7, p6, p5, p4, p3, p2, p1])
+                    bitmap.append([p8, p7, p6, p5, p4, p3, p2, p1])
 
-            bitmap[0][0] = 999
-            # Draw bitmap on virtual display
-            for y in range(len(bitmap)):
-                line = bitmap[y]
-                for x in range(len(line)):
-                    color = line[x]
-                    self.put_pixel(x + xpos, y + ypos, color)
+                bitmap[0][0] = 999
+                # Draw bitmap on virtual display
+                for y in range(len(bitmap)):
+                    line = bitmap[y]
+                    for x in range(len(line)):
+                        color = line[x]
+                        self.put_pixel(x + xpos, y + ypos, color)
             xpos += 8
             if xpos == self.window.width:
                 xpos = 0
                 ypos += 8
-                if ypos == self.window.height:
+                if ypos == 256:
                     break
 
     @property
