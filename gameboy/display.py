@@ -1,6 +1,7 @@
 import sdl2
 import sdl2.ext
 import sys
+import time
 
 from memory import Memory
 from util import (
@@ -96,6 +97,9 @@ class Display(object):
         self.vblank_duration = 1.1
         self.fps = 59.7
 
+        self.measured_fps = []
+        self.start = time.clock()
+
         # pseudo-registers
         self.LY = 0
         self.SCY = 0
@@ -161,6 +165,16 @@ class Display(object):
             self.read_palette()
 
             if self.LY < self.height:
+                now = time.clock()
+                elapsed = now - self.start
+                if elapsed > 1:
+                    self.start = now
+                    self.measured_fps.append(1.0/elapsed)
+                    if len(self.measured_fps) > 3:
+                        self.measured_fps = self.measured_fps[-3:]
+                        log("avg %.2f fps\r" % (
+                            sum(self.measured_fps)/float(len(self.measured_fps))),
+                            nl=False)
                 if self.background_display and self.LY == 0:
                     # Only draw when LY==0 to make it faster. Later on, we will
                     # only render one scanline at a time.

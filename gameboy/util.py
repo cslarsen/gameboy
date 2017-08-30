@@ -60,8 +60,8 @@ def make_randomized_array(length):
 
     return r
 
-def log(msg):
-    sys.stdout.write("%s\n" % msg)
+def log(msg, nl=True):
+    sys.stdout.write("%s%s" % (msg, "\n" if nl else ""))
     sys.stdout.flush()
 
 def dot(*args):
