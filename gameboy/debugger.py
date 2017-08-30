@@ -81,9 +81,10 @@ class Debugger(object):
             except ValueError as e:
                 log(e)
         elif c == "c":
+            run_to = number(args, 0, None)
             while True:
                 self.step(False)
-                if self.PC in self.breakpoints:
+                if self.PC == run_to or self.PC in self.breakpoints:
                     break
         elif c == "r":
             self.gameboy.cpu.print_registers()
@@ -166,9 +167,9 @@ class Debugger(object):
     def print_help(self):
         log("COMMANDS")
         log("  b [address / -address]: list, add and remove breakpoints")
-        log("  c: continue running until ctrl+c or breakpoint")
+        log("  c [address]: continue running until ctrl+c, breakpoint or address")
         log("  enter: repeat last command")
-        log("  l [address] [length]: disassemble code at address and length   bytes out")
+        log("  l [address] [length]: disassemble code at address and length bytes out")
         log("  m address: show eight raw bytes in memory")
         log("  q or ctrl+d: quit")
         log("  r: show registers")
