@@ -1,4 +1,5 @@
 import sys
+import io
 
 from opcodes import (
     add_0xff00_opcodes,
@@ -17,7 +18,13 @@ from __init__ import (
     u8_to_signed,
 )
 
-def disassemble(code, start_address=0x0000, length=None, stream=sys.stdout):
+def disassemble_str(code, start=0x0000, length=None, instructions=1):
+    stream = io.StringIO()
+    disassemble(code, start, length, instructions, stream)
+    return stream.read()
+
+def disassemble(code, start=0x0000, length=None, instructions=None,
+        stream=sys.stdout):
     """Disassembles binary code."""
     write = stream.write
     index = 0
@@ -30,7 +37,7 @@ def disassemble(code, start_address=0x0000, length=None, stream=sys.stdout):
 
     while index < length:
         try:
-            address = start_address + index
+            address = start + index
             opcode = code[index]
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, type, cycles, flags = table[opcode]
@@ -95,3 +102,8 @@ def disassemble(code, start_address=0x0000, length=None, stream=sys.stdout):
             prefix = True
 
         index += bytelen
+
+        if instructions is not None:
+            instructions -= 1
+            if instructions == 0:
+                break
