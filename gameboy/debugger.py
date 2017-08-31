@@ -74,7 +74,7 @@ class Debugger(object):
         if c == "q":
             self.quit = True
         elif c == "s":
-            self.step(True)
+            self.step()
         elif c == "b":
             try:
                 self.set_breakpoints(*map(parse_number, args))
@@ -83,7 +83,7 @@ class Debugger(object):
         elif c == "c":
             run_to = number(args, 0, None)
             while True:
-                self.step(False)
+                self.step()
                 if self.PC == run_to or self.PC in self.breakpoints:
                     break
         elif c == "r":

@@ -11,6 +11,9 @@ run3:
 run:
 	python gameboy $(GAME)
 
+debug:
+	python gameboy --debug $(GAME)
+
 profile:
 	python -m cProfile gameboy/__main__.py $(GAME)
 

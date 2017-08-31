@@ -23,6 +23,7 @@ from opcodes import (
     add_0xff00_opcodes,
     extended_opcodes,
     opcodes,
+    TYPE_R8,
 )
 
 class CPU(object):
@@ -60,7 +61,7 @@ class CPU(object):
 
     def decode(self, opcode):
         # Decode opcode
-        name, bytelen, cycles, flags = opcodes[opcode]
+        name, bytelen, type, cycles, flags = opcodes[opcode]
         raw = [opcode]
 
         if opcode == 0xcb: # PREFIX CB
@@ -69,7 +70,7 @@ class CPU(object):
             opcode = self.fetch()
             raw.append(opcode)
 
-            name, bytelen, xcycles, flags = extended_opcodes[opcode]
+            name, bytelen, type, xcycles, flags = extended_opcodes[opcode]
             cycles += xcycles
 
         # Decode arguments
@@ -81,10 +82,11 @@ class CPU(object):
                 raw.append(byte)
                 arg |= byte << 8*(offset-1)
 
+            if type == TYPE_R8:
+                arg = u8_to_signed(arg)
+
             if opcode in add_0xff00_opcodes:
                 arg += 0xff00
-            elif "r8" in name:
-                arg = u8_to_signed(arg)
 
         # TODO: Handle extended opcodes
 
