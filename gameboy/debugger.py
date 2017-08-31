@@ -101,7 +101,7 @@ class Debugger(object):
                 self.gameboy.memory[addr] = val
         elif c == "l":
             address = self.PC
-            length = 16
+            instructions = 8
             if len(args) > 0:
                 try:
                     address = parse_number(args[0])
@@ -111,11 +111,11 @@ class Debugger(object):
 
             if len(args) > 1:
                 try:
-                    length = parse_number(args[1])
+                    instructions = parse_number(args[1])
                 except ValueError as e:
                     log(e)
                     return
-            self.disassemble(address, length)
+            self.disassemble(address, instructions)
         else:
             log("Unknown command: %s" % command)
             return
@@ -155,12 +155,12 @@ class Debugger(object):
         except IndexError as e:
             log(e)
 
-    def disassemble(self, address, length=16):
+    def disassemble(self, address, instructions=16):
         code = []
-        for n in range(address, address+length):
+        for n in range(address, address+instructions*4):
             code.append(self.gameboy.cpu.memory[n])
         try:
-            disassemble(code, start_address=address)
+            disassemble(code, start=address, instructions=instructions)
         except IndexError:
             log("...")
 
@@ -169,7 +169,7 @@ class Debugger(object):
         log("  b [address / -address]: list, add and remove breakpoints")
         log("  c [address]: continue running until ctrl+c, breakpoint or address")
         log("  enter: repeat last command")
-        log("  l [address] [length]: disassemble code at address and length bytes out")
+        log("  l [address] [N]: disassemble N instructions from address")
         log("  m address: show eight raw bytes in memory")
         log("  q or ctrl+d: quit")
         log("  r: show registers")
@@ -177,12 +177,15 @@ class Debugger(object):
         log("  z address [value]: Set memory location to value (default zero)")
         log("")
         log("All numbers can be written in decimal, binary or hexadecimal: 123 0x7b $7b")
-        log("0b1111011")
+        log("0b1111011. ENTER repeats previous command.")
 
     def run(self):
         log("\nType CTRL+D or Q to quit, H for help.")
 
+        command = ""
         while not self.quit:
+            if command != "l":
+                self.disassemble(self.gameboy.cpu.PC, instructions=1)
             command, args = self.read_command()
             try:
                 self.dispatch(command, args)

@@ -103,7 +103,7 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
 
         index += bytelen
 
-        if instructions is not None:
+        if (instructions > 0) and (opcode != 0xcb):
             instructions -= 1
             if instructions == 0:
                 break
