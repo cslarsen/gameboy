@@ -32,9 +32,6 @@ def parse_command_line_args():
             default=find_default_boot_rom(),
             help="Which boot ROM to use when powering up")
 
-    p.add_argument("--trace", default=False, action="store_true",
-            help="Prints each instruction with register contents")
-
     p.add_argument("--debug", default=False, action="store_true",
             help="Perform interactive step debugging")
 
@@ -90,7 +87,7 @@ def main():
             sys.exit(0)
         else:
             try:
-                gameboy.cpu.run(trace=opt.trace)
+                gameboy.cpu.run()
             except KeyboardInterrupt:
                 log("Emulated at %.1f MHz" % gameboy.cpu.emulated_MHz)
                 raise

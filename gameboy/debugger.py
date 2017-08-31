@@ -57,9 +57,9 @@ class Debugger(object):
 
         return cmd, args
 
-    def step(self, trace):
+    def step(self):
         self.newline_on_break = True
-        self.gameboy.cpu.step(trace)
+        self.gameboy.cpu.step()
 
     def dispatch(self, command, args):
         if command == None:

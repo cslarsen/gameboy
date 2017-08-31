@@ -54,9 +54,6 @@ class CPU(object):
         self.total_cycles = 0
         self.start = None
 
-        # Save last fully decoded instruction for errors
-        self.prev_inst = ""
-
     def fetch(self):
         opcode = self.memory[self.PC]
         return opcode
@@ -84,66 +81,28 @@ class CPU(object):
                 raw.append(byte)
                 arg |= byte << 8*(offset-1)
 
-            # TODO: Use disassembler to get a nicely formatted instruction
-            if "d8" in name:
-                name = name.replace("d8", format_hex(arg))
-            elif "d16" in name:
-                name = name.replace("d16", format_hex(arg))
-            elif "a8" in name:
-                if opcode in add_0xff00_opcodes:
-                    name = name.replace("a8", "$ff00+$%0.2x" % arg)
-                    arg += 0xff00
-                else:
-                    name = name.replace("a8", format_hex(arg))
-            elif "a16" in name:
-                name = name.replace("a16", "addr $%0.4x" % arg)
+            if opcode in add_0xff00_opcodes:
+                arg += 0xff00
             elif "r8" in name:
-                # 8-bit signed data, which are added to program counter
                 arg = u8_to_signed(arg)
-                abs_addr = self.PC + bytelen + arg
-                if arg < 0:
-                    name = name.replace("r8", "PC-$%0.2x (@$%0.4x)" % (-arg,
-                        abs_addr))
-                else:
-                    name = name.replace("r8", "PC+$%0.2x (@$%0.4x)" % (arg,
-                        abs_addr))
-            else:
-                raise RuntimeError(
-                    "Opcode 0x%0.2x %r has unspecified argument: %s" %
-                        (opcode, name, format_hex(arg)))
 
         # TODO: Handle extended opcodes
 
         self.PC += bytelen
         return name, opcode, bytelen, cycles, flags, arg, raw
 
-    def run(self, trace=False):
+    def run(self):
         while True:
-            self.step(trace)
+            self.step()
 
-    def step(self, trace=False):
+    def step(self):
         if self.start is None:
             self.start = time.clock()
         address = self.PC
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
 
-        self.prev_inst = "$%0.4x:" % address
-        self.prev_inst += "  %-20s" % " ".join(map(lambda x: "0x%0.2x" % x,
-            raw))
-        self.prev_inst += "  %-20s" % name
-
-        if trace:
-            sys.stdout.write(self.prev_inst)
-
         self.execute(opcode, length, cycles, flags, raw, arg)
-
-        if trace:
-            if flags is not None:
-                sys.stdout.write("\nimplicit flags %s" % " ".join(flags))
-            sys.stdout.write("\n")
-            sys.stdout.flush()
-            self.print_registers()
 
         # Let the display do its thing, timed *very* roughly
         ratio = int((self.MHz*1e6 / self.memory.display.fps) /
@@ -271,8 +230,8 @@ class CPU(object):
             return message
 
         def unknown_opcode():
-            return RuntimeError("%s\n%s" % (error_message("Unknown"),
-                self.prev_inst))
+            return RuntimeError("$%0.4x: %s\n" % (self.PC,
+                error_message("Unknown")))
 
         def not_implemented():
             return NotImplementedError(error_message("Not implemented"))
