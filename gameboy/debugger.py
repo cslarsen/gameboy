@@ -184,7 +184,8 @@ class Debugger(object):
 
         command = ""
         while not self.quit:
-            if command != "l":
+            if (not self.previous_command[0] or
+                    not self.previous_command[0].startswith("l")):
                 self.disassemble(self.gameboy.cpu.PC, instructions=1)
             command, args = self.read_command()
             try:
