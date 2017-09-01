@@ -41,6 +41,9 @@ def parse_command_line_args():
     p.add_argument("--zoom", default=1, type=int,
             help="Zoom factor for display")
 
+    p.add_argument("--skip-boot", default=False, action="store_true",
+            help="Skips the boot code")
+
     opt = p.parse_args()
 
     if isinstance(opt.start_address, str):
@@ -87,6 +90,9 @@ def main():
             sys.exit(0)
         else:
             try:
+                if opt.skip_boot:
+                    # TODO: Set up registers etc.
+                    gameboy.cpu.PC = 0x100
                 gameboy.cpu.run()
             except KeyboardInterrupt:
                 log("Emulated at %.1f MHz" % gameboy.cpu.emulated_MHz)

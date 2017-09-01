@@ -61,7 +61,12 @@ class CPU(object):
 
     def decode(self, opcode):
         # Decode opcode
-        name, bytelen, type, cycles, flags = opcodes[opcode]
+        try:
+            name, bytelen, type, cycles, flags = opcodes[opcode]
+        except KeyError:
+            raise RuntimeError("Unknown opcode 0x%0.2x at $%0.4x" % (opcode,
+                self.PC))
+
         raw = [opcode]
 
         if opcode == 0xcb:
