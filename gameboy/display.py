@@ -52,6 +52,9 @@ class HostDisplay(object):
         c = 0x00cc44
         self.renderer.draw_line([x,y,x+w,y,x+w,y+h,x,y+h,x,y], c)
 
+    def put_pixels(self, positions, color):
+        self.renderer.draw_point(positions, color)
+
 class NoDisplay(object):
     def __getattr__(self, *args, **kw):
         return lambda *args, **kw: None
@@ -102,10 +105,19 @@ class Display(object):
             3: 0x000000,
         }
 
+        # Maps color to (x,y) pairs. Stupid, but that's how SDL wants it.
+        self.pixels = {0: [], 1: [], 2: [], 3: []}
+
     def palette_to_rgb(self, color):
         """Converts GameBoy palette color to a 24-bit RGB value."""
         color_for_bugs = 0xff0000
         return self.palette.get(color, color_for_bugs)
+
+    def flush_pixels(self):
+        for color, positions in self.pixels.items():
+            color = self.palette_to_rgb(color)
+            self.window.put_pixels(positions, color)
+        self.pixels = {0: [], 1: [], 2: [], 3: []}
 
     def put_pixel(self, x, y, color):
         self.window.put(x, y, self.palette_to_rgb(color))
@@ -170,56 +182,47 @@ class Display(object):
         # Position whithin this tile
         yoff = y - ypos
         bitmap += yoff*2
+        x = 0
 
         handle_sign = u8_to_signed if signed else lambda x: x
 
         # The background consists of 32x32 tiles, so find the tile index.
-        x = 0
-        index = 0
-
-        while index < 32:
+        for index in range(32):
             tile = handle_sign(self.ram[table + index_offset + index])
 
             a = self.ram[bitmap + tile*16]
             b = self.ram[bitmap + tile*16 + 1]
 
-            p8 = ((a & 0b00000001) >> 0) | ((b & 0b00000001) << 1)
-            p7 = ((a & 0b00000010) >> 1) | ((b & 0b00000010) >> 0)
-            p6 = ((a & 0b00000100) >> 2) | ((b & 0b00000100) >> 1)
-            p5 = ((a & 0b00001000) >> 3) | ((b & 0b00001000) >> 2)
-            p4 = ((a & 0b00010000) >> 4) | ((b & 0b00010000) >> 3)
-            p3 = ((a & 0b00100000) >> 5) | ((b & 0b00100000) >> 4)
-            p2 = ((a & 0b01000000) >> 6) | ((b & 0b01000000) >> 5)
-            p1 = ((a & 0b10000000) >> 7) | ((b & 0b10000000) >> 6)
+            colors = (
+                ((a & 0b10000000) >> 7) | ((b & 0b10000000) >> 6),
+                ((a & 0b01000000) >> 6) | ((b & 0b01000000) >> 5),
+                ((a & 0b00100000) >> 5) | ((b & 0b00100000) >> 4),
+                ((a & 0b00010000) >> 4) | ((b & 0b00010000) >> 3),
+                ((a & 0b00001000) >> 3) | ((b & 0b00001000) >> 2),
+                ((a & 0b00000100) >> 2) | ((b & 0b00000100) >> 1),
+                ((a & 0b00000010) >> 1) | ((b & 0b00000010)     ),
+                ((a & 0b00000001)     ) | ((b & 0b00000001) << 1))
 
-            self.put_pixel(x+0, y, p1)
-            self.put_pixel(x+1, y, p2)
-            self.put_pixel(x+2, y, p3)
-            self.put_pixel(x+3, y, p4)
-            self.put_pixel(x+4, y, p5)
-            self.put_pixel(x+5, y, p6)
-            self.put_pixel(x+6, y, p7)
-            self.put_pixel(x+7, y, p8)
-
+            for n, color in enumerate(colors):
+                self.pixels[color] += [x+n, y]
             x += 8
-            index += 1
 
     def step(self):
         """Renders one scanline."""
-        self.window.pump_events()
-
         if not self.screen_on:
+            self.window.pump_events()
             return
 
         if self.background_display:
-            self.read_palette()
             self.render_background_scanline(self.LY)
 
         if self.ly_rollover():
+            self.read_palette()
+            self.flush_pixels()
             self.show_viewport()
+            self.window.pump_events()
             self.window.update()
             self.calc_fps()
-            self.window.clear(0x474741)
 
     @property
     def LCDCONT(self):
