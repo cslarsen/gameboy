@@ -188,10 +188,10 @@ class Display(object):
 
         # The background consists of 32x32 tiles, so find the tile index.
         for index in range(32):
-            tile = handle_sign(self.ram[table + index_offset + index])
+            tile = 16*handle_sign(self.ram[table + index_offset + index])
 
-            a = self.ram[bitmap + tile*16]
-            b = self.ram[bitmap + tile*16 + 1]
+            a = self.ram[bitmap + tile]
+            b = self.ram[bitmap + tile + 1]
 
             colors = (
                 ((a & 0b10000000) >> 7) | ((b & 0b10000000) >> 6),
