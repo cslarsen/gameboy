@@ -52,6 +52,10 @@ class HostDisplay(object):
         c = 0x00cc44
         self.renderer.draw_line([x,y,x+w,y,x+w,y+h,x,y+h,x,y], c)
 
+class NoDisplay(object):
+    def __getattr__(self, *args, **kw):
+        return lambda *args, **kw: None
+
 class Display(object):
     """The GameBoy display system."""
     def __init__(self, no_display=False, zoom=1):
@@ -82,7 +86,11 @@ class Display(object):
         self.width = 160
         self.height = 144
 
-        self.window = HostDisplay("GameBoy", zoom=zoom)
+        if not no_display:
+            self.window = HostDisplay("GameBoy", zoom=zoom)
+        else:
+            self.window = NoDisplay()
+
         self.window.show()
         self.window.clear(0x474741)
         self.window.update()
