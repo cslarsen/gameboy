@@ -18,12 +18,21 @@ TYPE_R8 = 5
 
 # Opcodes whose argument should be added with 0xff00
 add_0xff00_opcodes = (0xe0, 0xf0)
+prefix_opcodes = (0xcb, 0x10)
 
 # Extended opcodes. Use this table after the opcode 0xcb has been encountered
 # from the preceding table. BYte lengths here are EXCLUSIVE the preceding
 # prefix opcode.
 extended_opcodes = {
     0x11: ("RL C",            1, TYPE_VOID,   8, ("Z", "0", "0", "C")),
+    0x30: ("SWAP B",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x31: ("SWAP C",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x32: ("SWAP D",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x33: ("SWAP E",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x34: ("SWAP H",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x35: ("SWAP L",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x36: ("SWAP (HL)",       2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
+    0x37: ("SWAP A",          2, TYPE_VOID,   8, ("Z", "0", "0", "0")),
     0x7c: ("BIT 7, H",        1, TYPE_VOID,   8, ("Z", "0", "1")),
 }
 

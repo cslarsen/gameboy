@@ -26,6 +26,10 @@ from opcodes import (
     TYPE_R8,
 )
 
+from instructions import (
+    swap8,
+)
+
 class CPU(object):
     """
     An 8-bit Sharp LR35902 CPU running at 4.19 MHz.
@@ -76,6 +80,17 @@ class CPU(object):
             raw.append(opcode)
 
             name, bytelen, type, xcycles, flags = extended_opcodes[opcode]
+            cycles += xcycles
+        elif opcode == 0x10:
+            # Prefix: Stop opcode
+            self.PC += bytelen
+            opcode = self.fetch()
+            raw.append(opcode)
+
+            # It is stored in the default table as just 0x10, so just get it
+            # from there. I prefer decoding it like "0x10 0x00 STOP" instead of
+            # two instructions STOP/NOP.
+            name, bytelen, type, xcycles, flags = opcodes[0x10]
             cycles += xcycles
 
         # Decode arguments
@@ -247,6 +262,37 @@ class CPU(object):
                 zero = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
                 zero = not (self.H & (1<<7))
+            elif opcode == 0x30: # SWAP B
+                self.B = swap8(self.B)
+                zero = (self.B == 0)
+            elif opcode == 0x31: # SWAP C
+                self.C = swap8(self.C)
+                zero = (self.C == 0)
+            elif opcode == 0x32: # SWAP D
+                self.D = swap8(self.D)
+                zero = (self.D == 0)
+            elif opcode == 0x33: # SWAP E
+                self.E = swap8(self.E)
+                zero = (self.E == 0)
+            elif opcode == 0x34: # SWAP H
+                self.H = swap8(self.H)
+                zero = (self.H == 0)
+            elif opcode == 0x35: # SWAP L
+                self.L = swap8(self.L)
+                zero = (self.L == 0)
+            elif opcode == 0x36: # SWAP L
+                value = swap8(self.memory[self.HL])
+                self.memory[self.HL] = value
+                zero = (value == 0)
+            elif opcode == 0x37: # SWAP A
+                self.A = swap8(self.A)
+                zero = (self.A == 0)
+            else:
+                raise unknown_opcode()
+        elif raw[0] == 0x10:
+            if opcode == 0x10: # STOP
+                # Halt CPU/LCD display until button pressed
+                raise not_implemented()
             else:
                 raise unknown_opcode()
         else:
@@ -336,9 +382,6 @@ class CPU(object):
 
             elif opcode == 0x0e: # LD C, d8
                 self.C = arg
-
-            elif opcode == 0x10: # STOP
-                raise not_implemented()
 
             elif opcode == 0x11: # LD DE, d16
                 self.DE = arg
@@ -443,6 +486,7 @@ class CPU(object):
                 self.memory[self.HL] = self.E
 
             elif opcode == 0x76: # HALT
+                # Power down CPU until an interrupt occurs (for energy saving)
                 raise not_implemented()
 
             elif opcode == 0xc1: # POP BC
@@ -484,7 +528,7 @@ class CPU(object):
                 self.A = self.memory[arg]
 
             elif opcode == 0xf3: # DI
-                raise not_implemented()
+                self.interrupts_enabled = False
 
             elif opcode == 0xf7: # RST 30H
                 self.memory.set16(self.SP, self.PC)
@@ -498,7 +542,7 @@ class CPU(object):
                 self.A = self.memory[arg]
 
             elif opcode == 0xfb: # EI
-                raise not_implemented()
+                self.interrupts_enabled = True
 
             elif opcode == 0xfe: # CP d8
                 result = (self.A - arg) % 0xff
