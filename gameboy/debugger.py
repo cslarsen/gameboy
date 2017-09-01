@@ -1,3 +1,5 @@
+import readline
+
 from disassembler import disassemble
 from util import (
     format_hex,
