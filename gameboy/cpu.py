@@ -53,7 +53,7 @@ class CPU(object):
         # Amount of cycles spent
         self.cycles = 0
         self.total_cycles = 0
-        self.start = None
+        self.start = time.clock()
 
     def fetch(self):
         opcode = self.memory[self.PC]
@@ -64,8 +64,8 @@ class CPU(object):
         name, bytelen, type, cycles, flags = opcodes[opcode]
         raw = [opcode]
 
-        if opcode == 0xcb: # PREFIX CB
-            # Fetch the next instruction as well
+        if opcode == 0xcb:
+            # Prefix: Fetch extended opcode
             self.PC += bytelen
             opcode = self.fetch()
             raw.append(opcode)
@@ -98,8 +98,6 @@ class CPU(object):
             self.step()
 
     def step(self):
-        if self.start is None:
-            self.start = time.clock()
         address = self.PC
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
@@ -117,14 +115,11 @@ class CPU(object):
     @property
     def emulated_MHz(self):
         """Attempts to measure emulated clockspeed."""
-        if self.start is None:
+        elapsed = (time.clock() - self.start)
+        if elapsed == 0:
             return 0
-        else:
-            elapsed = (time.clock() - self.start)
-            if elapsed == 0:
-                return 0
-            cps = self.total_cycles / elapsed
-            return cps / 1000000.0
+        cps = self.total_cycles / elapsed
+        return cps / 1000000.0
 
     def print_registers(self):
         print("pc=$%0.4x sp=$%0.4x a=$%0.2x b=$%0.2x c=$%0.2x d=$%0.2x e=$%0.2x f=$%0.1x h=$%0.2x l=$%0.2x" %
