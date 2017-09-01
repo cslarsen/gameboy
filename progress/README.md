@@ -144,10 +144,9 @@ intermittent updates:
     I'll just create a list of 256 functions and index with the opcode so I can
     dispatch. Those functions will have the same signature.
 
-    The cool thing with having one function per opcode is that it's easy to
-    dish out a non-optimizing compiler for the code, almost like Forth threaded
-    code. There wouldn't be any practical benefit to it, but it would be
-    cooool.
+    Having one function per opcode means that it's trivial to dish out a 1:1,
+    non-optimizing compiler for the code, just like Forth threaded code. There
+    wouldn't be any practical benefit to it, but it would be _cool_.
 
   * After implementing the entire instruction set, I'll start trying to run a
     real game. There will be a lot more work to do: I need to make sure every
@@ -155,7 +154,7 @@ intermittent updates:
     special memory locations (like I/O, etc.), I need to add a sound driver and
     handle input.
 
-    All of is doable, but a lot of work. With the initial speed, I am now
+    All of that is doable, but a lot of work. With the initial speed, I am now
     slightly overwhelmed. But given that the boot code works fine, it is quite
     exciting as well --- if it wasn't for that damn framerate. I want my 60
     fps! I'm very tempted to fix the framerate right now, then add sound, so
