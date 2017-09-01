@@ -5,7 +5,6 @@ import time
 
 from memory import Memory
 from util import (
-    dot,
     log,
     u8_to_signed,
 )

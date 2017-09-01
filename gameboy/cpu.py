@@ -7,13 +7,10 @@ a 256-byte boot ROM. After booting, it will continue executing from 0x0100.
 TODO: Implement bytes and registers as rollover unsigned ints.
 """
 
-import sys
 import time
 
 from util import (
-    format_bin,
     format_hex,
-    log,
     u16_to_u8,
     u8_to_signed,
     u8_to_u16,
@@ -118,7 +115,6 @@ class CPU(object):
             self.step()
 
     def step(self):
-        address = self.PC
         opcode = self.fetch()
         name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
 
@@ -225,18 +221,18 @@ class CPU(object):
         else:
             self.F &= ~(1<<4)
 
-    def error_message(prefix, raw, arg=None):
+    def error_message(self, prefix, raw, arg=None):
         message = "%s instruction %s" % (prefix, " ".join(map(lambda x:
             "0x%0.2x" % x, raw)))
         if arg is not None:
             message += " with argument %s" % format_hex(arg)
         return message
 
-    def unknown_opcode():
+    def unknown_opcode(self):
         return RuntimeError("$%0.4x: %s\n" % (self.PC,
             self.error_message("Unknown")))
 
-    def not_implemented():
+    def not_implemented(self):
         return NotImplementedError(self.error_message("Not implemented"))
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
@@ -571,9 +567,9 @@ class CPU(object):
         # Update flags after executing the instruction
         if flags is not None:
             for shift, flag in zip((7, 6, 5, 4), flags):
-                if flag == "0":
+                if flag == 0:
                     self.F &= ~(1 << shift)
-                elif flag == "1":
+                elif flag == 1:
                     self.F |= 1<<shift
                 elif flag == "Z" and Z is not None:
                     self.Z_flag = Z

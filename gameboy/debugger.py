@@ -1,9 +1,6 @@
-import sys
-
 from disassembler import disassemble
 from util import (
     format_hex,
-    load_binary,
     log,
     wait_enter,
 )
