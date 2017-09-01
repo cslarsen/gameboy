@@ -85,14 +85,15 @@ def main():
         gameboy = Gameboy(cartridge, boot, no_display=opt.no_display,
                 zoom=opt.zoom)
 
+        if opt.skip_boot:
+            # TODO: Set up registers etc.
+            gameboy.cpu.PC = 0x100
+
         if opt.debug:
             Debugger(gameboy).run()
             sys.exit(0)
         else:
             try:
-                if opt.skip_boot:
-                    # TODO: Set up registers etc.
-                    gameboy.cpu.PC = 0x100
                 gameboy.cpu.run()
             except KeyboardInterrupt:
                 log("Emulated at %.1f MHz" % gameboy.cpu.emulated_MHz)
