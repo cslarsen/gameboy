@@ -225,82 +225,70 @@ class CPU(object):
         else:
             self.F &= ~(1<<4)
 
+    def error_message(prefix, raw, arg=None):
+        message = "%s instruction %s" % (prefix, " ".join(map(lambda x:
+            "0x%0.2x" % x, raw)))
+        if arg is not None:
+            message += " with argument %s" % format_hex(arg)
+        return message
+
+    def unknown_opcode():
+        return RuntimeError("$%0.4x: %s\n" % (self.PC,
+            self.error_message("Unknown")))
+
+    def not_implemented():
+        return NotImplementedError(self.error_message("Not implemented"))
+
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
-        # TODO: By changing the opcodes struct, we can do this programmatically
-        # and much more elegantly
-        if length == 1:
-            assert(arg is None)
-        else:
-            assert(arg is not None)
-
-        zero = None
-        carry = None
-        half_carry = None
-        subtract = None
-
-        def error_message(prefix):
-            message = "%s instruction %s" % (
-                    prefix,
-                    " ".join(map(lambda x: "0x%0.2x" % x, raw)))
-            if arg is not None:
-                message += " with argument %s" % format_hex(arg)
-            return message
-
-        def unknown_opcode():
-            return RuntimeError("$%0.4x: %s\n" % (self.PC,
-                error_message("Unknown")))
-
-        def not_implemented():
-            return NotImplementedError(error_message("Not implemented"))
+        Z = None
+        N = None
+        H = None
+        C = None
 
         # Order dependency: Check for prefix first
         if raw[0] == 0xcb: # PREFIX CB
             if opcode == 0x11: # RL C
-                carry = (self.C & (1<<7)) >> 7
+                C = (self.C & (1<<7)) >> 7
                 self.C = (self.C << 1) & 0xff
                 self.C |= self.C_flag
-                zero = (self.C == 0)
+                Z = (self.C == 0)
             elif opcode == 0x7c: # BIT 7, H
-                zero = not (self.H & (1<<7))
+                Z = not (self.H & (1<<7))
             elif opcode == 0x30: # SWAP B
                 self.B = swap8(self.B)
-                zero = (self.B == 0)
+                Z = (self.B == 0)
             elif opcode == 0x31: # SWAP C
                 self.C = swap8(self.C)
-                zero = (self.C == 0)
+                Z = (self.C == 0)
             elif opcode == 0x32: # SWAP D
                 self.D = swap8(self.D)
-                zero = (self.D == 0)
+                Z = (self.D == 0)
             elif opcode == 0x33: # SWAP E
                 self.E = swap8(self.E)
-                zero = (self.E == 0)
+                Z = (self.E == 0)
             elif opcode == 0x34: # SWAP H
                 self.H = swap8(self.H)
-                zero = (self.H == 0)
+                Z = (self.H == 0)
             elif opcode == 0x35: # SWAP L
                 self.L = swap8(self.L)
-                zero = (self.L == 0)
+                Z = (self.L == 0)
             elif opcode == 0x36: # SWAP L
                 value = swap8(self.memory[self.HL])
                 self.memory[self.HL] = value
-                zero = (value == 0)
+                Z = (value == 0)
             elif opcode == 0x37: # SWAP A
                 self.A = swap8(self.A)
-                zero = (self.A == 0)
+                Z = (self.A == 0)
             else:
-                raise unknown_opcode()
+                raise self.unknown_opcode()
         elif raw[0] == 0x10:
             if opcode == 0x10: # STOP
                 # Halt CPU/LCD display until button pressed
-                raise not_implemented()
+                raise self.not_implemented()
             else:
-                raise unknown_opcode()
+                raise self.unknown_opcode()
         else:
-            # TODO: See the official Nintendo manual. Instructions can be
-            # grouped much better. For example, all load instructions start
-            # with bits 01, then the next three bits is destination register
-            # (e.g. A=0b111) then the source register is the three last bits,
-            # from a table. Makes dispatching much faster as well.
+            # Ordinary instructions
             if opcode == 0x00: # NOP
                 pass
 
@@ -309,7 +297,7 @@ class CPU(object):
 
             elif opcode == 0xaf: # XOR A
                 self.A = 0
-                zero = True
+                Z = True
 
             elif opcode == 0x3e: # LD A, d8
                 self.A = arg
@@ -353,12 +341,12 @@ class CPU(object):
 
             elif opcode == 0x04: # INC B
                 self.B = (self.B + 1) % 0xff
-                zero = (self.B == 0)
+                Z = (self.B == 0)
                 # TODO: Set half carry
 
             elif opcode == 0x05: # DEC B
                 self.B = (self.B - 1) % 0xff
-                zero = (self.B == 0)
+                Z = (self.B == 0)
                 # TODO: Implement half-carry flag
 
             elif opcode == 0x06: # LD B, d8
@@ -372,13 +360,13 @@ class CPU(object):
 
             elif opcode == 0x0c: # INC C
                 self.C = (self.C + 1) % 0xff
-                zero = (self.C == 0)
+                Z = (self.C == 0)
                 # TODO: Set half carry
 
             elif opcode == 0x0d: # DEC C
                 self.C = (self.C - 1) % 0xff
-                zero = (self.C == 0)
-                # TODO: set half_carry flag
+                Z = (self.C == 0)
+                # TODO: set H flag
 
             elif opcode == 0x0e: # LD C, d8
                 self.C = arg
@@ -391,25 +379,25 @@ class CPU(object):
 
             elif opcode == 0x15: # DEC D
                 self.D = (self.D - 1) % 0xff
-                zero = (self.D == 0)
-                # TODO: set half_carry flag
+                Z = (self.D == 0)
+                # TODO: set H flag
 
             elif opcode == 0x16: # LD D, d8
                 self.D = arg
 
             elif opcode == 0x17: # RLA
-                carry = (self.A & (1<<7)) >> 7
+                C = (self.A & (1<<7)) >> 7
                 self.A = (self.A << 1) & 0xff
                 self.A |= self.C_flag
-                zero = (self.A == 0)
+                Z = (self.A == 0)
 
             elif opcode == 0x1a: # LD A, (DE)
                 self.A = self.memory[self.DE]
 
             elif opcode == 0x1d: # DEC E
                 self.E = (self.E - 1) % 0xff
-                zero = (self.E == 0)
-                # TODO: set half_carry flag
+                Z = (self.E == 0)
+                # TODO: set H flag
 
             elif opcode == 0x1e: # LD E, d8
                 self.E = arg
@@ -423,7 +411,7 @@ class CPU(object):
 
             elif opcode == 0x24: # INC H
                 self.H = (self.H + 1) % 0xff
-                zero = (self.H == 0)
+                Z = (self.H == 0)
                 # TODO: Set half carry
 
             elif opcode == 0x18: # JR r8
@@ -448,18 +436,18 @@ class CPU(object):
 
             elif opcode == 0x33: # INC SP
                 self.SP = (self.SP + 1) % 0xffff
-                zero = (self.SP == 0)
-                # TODO: Set half_carry flag
+                Z = (self.SP == 0)
+                # TODO: Set H flag
 
             elif opcode == 0x3c: # INC A
                 self.A = (self.A + 1) % 0xff
-                zero = (self.A == 0)
+                Z = (self.A == 0)
                 # TODO: set half carry
 
             elif opcode == 0x3d: # DEC A
                 self.A = (self.A - 1) % 0xff
-                zero = (self.A == 0)
-                # TODO: set half_carry flag
+                Z = (self.A == 0)
+                # TODO: set H flag
 
             elif opcode == 0x42: # LD B, D
                 self.B = self.D
@@ -487,7 +475,7 @@ class CPU(object):
 
             elif opcode == 0x76: # HALT
                 # Power down CPU until an interrupt occurs (for energy saving)
-                raise not_implemented()
+                raise self.not_implemented()
 
             elif opcode == 0xc1: # POP BC
                 self.SP = (self.SP + 0x10) % 0xffff
@@ -516,10 +504,10 @@ class CPU(object):
                 self.PC = arg
 
             elif opcode == 0xce: # ADD A, d8
-                raise not_implemented()
+                raise self.not_implemented()
 
             elif opcode == 0xd9: # RETI
-                raise not_implemented()
+                raise self.not_implemented()
 
             elif opcode == 0xea: # LD (a16), A
                 self.memory[arg] = self.A
@@ -546,9 +534,9 @@ class CPU(object):
 
             elif opcode == 0xfe: # CP d8
                 result = (self.A - arg) % 0xff
-                zero = (result == 0)
-                carry = (self.A < arg)
-                # TODO: set half_carry
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
 
             elif opcode == 0xff: # RST 38H
                 self.memory.set16(self.SP, self.PC)
@@ -557,22 +545,22 @@ class CPU(object):
 
             elif opcode == 0x90: # SUB B
                 self.A = (self.A - self.B) % 0xff
-                zero = (self.A == 0)
+                Z = (self.A == 0)
                 # TODO: set half carry and carry flags
 
             elif opcode == 0xbe: # CP (HL)
                 result = (self.A - self.memory[self.HL]) % 0xff
-                zero = (result == 0)
-                carry = (self.A < arg)
-                # TODO: set half_carry
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
 
             elif opcode == 0x86: # ADD A, (HL)
                 self.A = (self.A + self.memory[self.HL]) % 0xff
-                zero = (self.A == 0)
+                Z = (self.A == 0)
                 # TODO: Set other flags
 
             else:
-                raise unknown_opcode()
+                raise self.unknown_opcode()
 
         # Update flags after executing the instruction
         if flags is not None:
@@ -581,14 +569,14 @@ class CPU(object):
                     self.F &= ~(1 << shift)
                 elif flag == "1":
                     self.F |= 1<<shift
-                elif flag == "Z" and zero is not None:
-                    self.Z_flag = zero
-                elif flag == "H" and half_carry is not None:
-                    self.H_flag = half_carry
-                elif flag == "N" and subtract is not None:
-                    self.N_flag = subtract
-                elif flag == "C" and carry is not None:
-                    self.C_flag = carry
+                elif flag == "Z" and Z is not None:
+                    self.Z_flag = Z
+                elif flag == "H" and H is not None:
+                    self.H_flag = H
+                elif flag == "N" and N is not None:
+                    self.N_flag = N
+                elif flag == "C" and C is not None:
+                    self.C_flag = C
 
         self.cycles += cycles
         self.total_cycles += cycles
