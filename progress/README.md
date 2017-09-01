@@ -160,8 +160,10 @@ intermittent updates:
     fps! I'm very tempted to fix the framerate right now, then add sound, so
     that the boot code will be complete. We'll see.
 
+Today's screenshot:
+
 ![A debugging quiz](debugger-02.png)
 
-Above is a debugger listing for a game. Can you guess what it is? It is
-entirely possible to find out by studying the debug output, and shouldn't be
-too hard once you get it.
+Above is a debugger listing for a game. Can you guess which one? It is entirely
+possible to find out by studying the debug output, and shouldn't be too hard
+once you get it.
