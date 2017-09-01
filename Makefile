@@ -11,6 +11,9 @@ run3:
 run:
 	python gameboy $(GAME)
 
+run-pypy:
+	pypy gameboy $(GAME)
+
 debug:
 	python gameboy --debug $(GAME)
 
