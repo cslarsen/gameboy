@@ -258,6 +258,9 @@ class CPU(object):
             if opcode == 0x00: # NOP
                 pass
 
+            elif opcode == 0xc3: # JP a16
+                self.PC = arg
+
             elif opcode == 0xaf: # XOR A
                 self.A = 0
                 zero = True

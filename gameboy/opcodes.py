@@ -19,6 +19,14 @@ TYPE_R8 = 5
 # Opcodes whose argument should be added with 0xff00
 add_0xff00_opcodes = (0xe0, 0xf0)
 
+# Extended opcodes. Use this table after the opcode 0xcb has been encountered
+# from the preceding table. BYte lengths here are EXCLUSIVE the preceding
+# prefix opcode.
+extended_opcodes = {
+    0x11: ("RL C",            1, TYPE_VOID,   8, ("Z", "0", "0", "C")),
+    0x7c: ("BIT 7, H",        1, TYPE_VOID,   8, ("Z", "0", "1")),
+}
+
 # Maps raw byte to (label, byte length, argument type, cycles or (cycles for
 # taken branch, cycles for not taken branch), flags).
 opcodes = {
@@ -85,6 +93,7 @@ opcodes = {
     0xbb: ("CP E",            1, TYPE_VOID,  4, ("Z", "1", "H", "C")),
     0xbe: ("CP (HL)",         1, TYPE_VOID,  8, ("Z", "1", "H", "C")),
     0xc1: ("POP BC",          1, TYPE_VOID,  12, None),
+    0xc3: ("JP a16",          3, TYPE_A16,   16, None),
     0xc5: ("PUSH BC",         1, TYPE_VOID,  16, None),
     0xc9: ("RET",             1, TYPE_VOID,  16, None),
     0xcb: ("PREFIX CB",       1, TYPE_VOID,   4, None),
@@ -99,17 +108,9 @@ opcodes = {
     0xf0: ("LDH A, (a8)",     2, TYPE_A8,    12, None),
     0xf3: ("DI",              1, TYPE_VOID,   4, None),
     0xf7: ("RST 30H",         1, TYPE_VOID,  16, None),
-    0xf9: ("LD SP, HL",       1, TYPE_VOID,   8, None),
+    0xf9: ("LD SP, HL",       1, TYPE_VOID,   8, None), # NOTE: Nintendo manual says 2 cycles?
     0xfa: ("LD A, (a16)",     3, TYPE_A16,   16, None),
     0xfb: ("EI",              1, TYPE_VOID,   4, None),
     0xfe: ("CP d8",           2, TYPE_D8,     8, ("Z", "1", "H", "C")),
     0xff: ("RST 38H",         1, TYPE_VOID,  16, None),
-}
-
-# Extended opcodes. Use this table after the opcode 0xcb has been encountered
-# from the preceding table. BYte lengths here are EXCLUSIVE the preceding
-# prefix opcode.
-extended_opcodes = {
-    0x11: ("RL C",            1, TYPE_VOID,   8, ("Z", "0", "0", "C")),
-    0x7c: ("BIT 7, H",        1, TYPE_VOID,   8, ("Z", "0", "1")),
 }
