@@ -144,9 +144,13 @@ intermittent updates:
     I'll just create a list of 256 functions and index with the opcode so I can
     dispatch. Those functions will have the same signature.
 
-    Having one function per opcode means that it's trivial to dish out a 1:1,
-    non-optimizing compiler for the code, just like Forth threaded code. There
-    wouldn't be any practical benefit to it, but it would be _cool_.
+    I played with the idea of 1:1 compiling the instructions to such subroutine
+    calls, just like Forth threaded code, but of course you'd then need a
+    separate copy of the raw data, and it would only be possible for ROM-data
+    since RAM instructions can be self-modifying, and also some devious game
+    developer might decide to jump right into the middle of a multi-byte
+    instruction. So I've decided against it. I know it's a deceiving thought,
+    and that doing so in reality is very tricky.
 
   * After implementing the entire instruction set, I'll start trying to run a
     real game. There will be a lot more work to do: I need to make sure every
