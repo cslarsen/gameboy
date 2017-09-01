@@ -559,6 +559,12 @@ class CPU(object):
                 Z = (self.A == 0)
                 # TODO: Set other flags
 
+            elif opcode == 0x45: # LD B, L
+                self.B = self.L
+
+            elif opcode == 0x36: # LD (HL), d8
+                self.memory[self.HL] = arg
+
             else:
                 raise self.unknown_opcode()
 
