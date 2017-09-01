@@ -101,7 +101,7 @@ class Debugger(object):
                 self.gameboy.memory[addr] = val
         elif c == "l":
             address = self.PC
-            instructions = 8
+            instructions = 16
             if len(args) > 0:
                 try:
                     address = parse_number(args[0])
