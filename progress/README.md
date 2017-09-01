@@ -117,3 +117,46 @@ incorrectly. Fixing up those produces this fine, scrolling logo:
 The problem at this moment is that the whole thing runs very slowly, the screen
 rendering being the slowest. I need to do some minimum performance
 optimizations, because the scrolling takes ages before completing.
+
+Day 7
+-----
+
+I have not been able to spend many hours the last few days. Here are the
+intermittent updates:
+
+  * I have done a small optimization to the drawing routine. I now get around 3
+    frames per second on vanilla Python. PyPy works as well, but gets 0.5 fps
+    on one machine and 6 fps on another.
+
+    I have to say that writing to a 2D buffer in SDL is extremely slow, even in
+    software rendering. Which is just insane, and probably means that I'm doing
+    it wrong. I'm quite tempted to implement my own in C and bind it with
+    Cython. Of course, then I'll do the CPU and memory there as well. The only
+    thing I don't want to deal with myself is sound processing. The other stuff
+    is easy.
+
+  * I've finished typing out the basic (non-extended) instruction set. It's a
+    lot of work, and I now regret that I didn't just download a JSON file or
+    something like that.
+
+    With the sheer amount of opcodes I now have, I have to
+    restructure how they are executed. Now they're just one big if-else-block.
+    I'll just create a list of 256 functions and index with the opcode so I can
+    dispatch. Those functions will have the same signature.
+
+    The cool thing with having one function per opcode is that it's easy to
+    dish out a non-optimizing compiler for the code, almost like Forth threaded
+    code. There wouldn't be any practical benefit to it, but it would be
+    cooool.
+
+  * After implementing the entire instruction set, I'll start trying to run a
+    real game. There will be a lot more work to do: I need to make sure every
+    instruction is right, I need to handle interrupts, I need to add all
+    special memory locations (like I/O, etc.), I need to add a sound driver and
+    handle input.
+
+    All of is doable, but a lot of work. With the initial speed, I am now
+    slightly overwhelmed. But given that the boot code works fine, it is quite
+    exciting as well --- if it wasn't for that damn framerate. I want my 60
+    fps! I'm very tempted to fix the framerate right now, then add sound, so
+    that the boot code will be complete. We'll see.
