@@ -160,3 +160,9 @@ intermittent updates:
     exciting as well --- if it wasn't for that damn framerate. I want my 60
     fps! I'm very tempted to fix the framerate right now, then add sound, so
     that the boot code will be complete. We'll see.
+
+![A debugging quiz](debugger-02.png)
+
+Above is a debugger listing for a game. Can you guess what it is? It is
+entirely possible to find out by studying the debug output, and shouldn't be
+too hard once you get it.
