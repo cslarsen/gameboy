@@ -93,8 +93,9 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
 
             if flags is not None:
                 for flag in flags:
-                    assert(flag in ("Z", "N", "H", "C", "0", "1"))
-                write(" flags %s" % " ".join(flags))
+                    if not flag in ("Z", "N", "H", "C", 0, 1, None):
+                        raise RuntimeError("Invalid flag: %s" % flag)
+                write(" flags %s" % " ".join(map(str, flags)))
 
             prefix = False
             write("\n")
