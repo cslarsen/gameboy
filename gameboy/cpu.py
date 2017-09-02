@@ -651,8 +651,9 @@ class CPU(object):
             elif opcode == 0xcd: # CALL a16
                 self.call(arg)
 
-            elif opcode == 0xce: # ADD A, d8
-                self.A = (self.A + arg) % 0xff
+            elif opcode == 0xce: # ADC A, d8
+                n = arg + self.C_flag
+                self.A = (self.A + n) % 0xff
                 Z = self.A == 0
                 # TODO: Set C, H
 
