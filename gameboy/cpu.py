@@ -354,9 +354,6 @@ class CPU(object):
                 self.A |= self.memory[self.HL]
                 Z = self.A == 0
 
-            elif opcode == 0x2f: # CPL
-                self.A = ~self.A & 0xff
-
             elif opcode == 0xb7: # OR A
                 self.A |= self.A # NOTE: No-op statement really
                 Z = self.A == 0
@@ -366,6 +363,57 @@ class CPU(object):
                 # NOTE: CPU guide says flags should be updated, but that other
                 # guide says no
                 Z = self.A == 0
+
+            elif opcode == 0xb8: # CP B
+                result = (self.A - self.B) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xb9: # CP C
+                result = (self.A - self.C) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xba: # CP D
+                result = (self.A - self.D) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xbb: # CP E
+                result = (self.A - self.E) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xbc: # CP H
+                result = (self.A - self.H) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xbd: # CP L
+                result = (self.A - self.L) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xbe: # CP (HL)
+                result = (self.A - self.memory[self.HL]) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0xbf: # CP A
+                result = (self.A - self.A) % 0xff
+                Z = (result == 0)
+                C = (self.A < arg)
+                # TODO: set H
+
+            elif opcode == 0x2f: # CPL
+                self.A = ~self.A & 0xff
 
             elif opcode == 0x3e: # LD A, d8
                 self.A = arg
@@ -683,12 +731,6 @@ class CPU(object):
                 self.A = (self.A - n) % 0xff
                 Z = self.A == 0
                 # TODO H/C flags
-
-            elif opcode == 0xbe: # CP (HL)
-                result = (self.A - self.memory[self.HL]) % 0xff
-                Z = (result == 0)
-                C = (self.A < arg)
-                # TODO: set H
 
             elif opcode == 0x86: # ADD A, (HL)
                 self.A = (self.A + self.memory[self.HL]) % 0xff
