@@ -82,6 +82,8 @@ class MemoryController(object):
         self.fixed_home = self.cartridge.rom_bank[0]
         self.home = self.cartridge.rom_bank[1]
 
+        self.boot_rom_active = True
+
         # Make sure memory is mirrored from the start
         for i in range(0xc000, 0xde01):
             self[i] = self[i+0x1000]
@@ -90,7 +92,7 @@ class MemoryController(object):
         """Returns (array, offset) that correspond to the given memory mapped
         address."""
 
-        if 0x0 <= address < 0x0100:
+        if 0x0 <= address < 0x0100 and self.boot_rom_active:
             # Contains a few reserved memory locations. However, on power-up,
             # this are will refer to the boot ROM. After boot-up, this area
             # will be usable again.
@@ -157,7 +159,8 @@ class MemoryController(object):
             self.display.BGPAL = value
             return
         if address == 0xff50:
-            raise MemoryError("DMG ROM turned off, boot code ran to finish!")
+            log("DMG boot ROM turned off!")
+            self.boot_rom_active = False
 
         if address < 0x8000:
             # Write to ROM is a request for bank-switching
