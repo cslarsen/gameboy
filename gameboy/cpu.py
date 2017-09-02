@@ -299,51 +299,50 @@ class CPU(object):
             elif opcode == 0xc3: # JP a16
                 self.PC = arg
 
-            elif opcode == 0xaf: # XOR A
-                self.A = 0
-                Z = True
-
             elif opcode == 0x2a: # LD A, (HL+)
                 self.A = self.memory[self.HL]
                 self.HL = inc16(self.HL)
 
             elif opcode == 0xb0: # OR B
                 self.A |= self.B
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb1: # OR C
                 self.A |= self.C
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb2: # OR D
                 self.A |= self.D
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb3: # OR E
                 self.A |= self.E
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb4: # OR H
                 self.A |= self.H
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb5: # OR L
                 self.A |= self.L
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xb6: # OR (HL)
                 self.A |= self.memory[self.HL]
-                zero = self.A == 0
+                Z = self.A == 0
+
+            elif opcode == 0x2f: # CPL
+                self.A = ~self.A & 0xff
 
             elif opcode == 0xb7: # OR A
                 self.A |= self.A # NOTE: No-op statement really
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0xf6: # OR d8
                 self.A |= arg
                 # NOTE: CPU guide says flags should be updated, but that other
                 # guide says no
-                zero = self.A == 0
+                Z = self.A == 0
 
             elif opcode == 0x3e: # LD A, d8
                 self.A = arg
@@ -610,6 +609,74 @@ class CPU(object):
 
             elif opcode == 0x36: # LD (HL), d8
                 self.memory[self.HL] = arg
+
+            elif opcode == 0xa0: # AND B
+                self.A = self.B & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa1: # AND C
+                self.A = self.C & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa2: # AND D
+                self.A = self.D & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa3: # AND E
+                self.A = self.E & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa4: # AND H
+                self.A = self.H & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa5: # AND L
+                self.A = self.L & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa6: # AND (HL)
+                self.A = self.memory[self.HL] & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa7: # AND A
+                self.A = self.A & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xe6: # AND d8
+                self.A = arg & self.A
+                Z = self.A == 0
+
+            elif opcode == 0xa8: # XOR B
+                self.A ^= self.B
+                Z = self.A == 0
+
+            elif opcode == 0xa9: # XOR C
+                self.A ^= self.C
+                Z = self.A == 0
+
+            elif opcode == 0xaa: # XOR D
+                self.A ^= self.D
+                Z = self.A == 0
+
+            elif opcode == 0xab: # XOR E
+                self.A ^= self.E
+                Z = self.A == 0
+
+            elif opcode == 0xac: # XOR H
+                self.A ^= self.H
+                Z = self.A == 0
+
+            elif opcode == 0xad: # XOR L
+                self.A ^= self.L
+                Z = self.A == 0
+
+            elif opcode == 0xae: # XOR (HL)
+                self.A ^= self.memory[self.HL]
+                Z = self.A == 0
+
+            elif opcode == 0xaf: # XOR A
+                self.A = 0
+                Z = True
 
             else:
                 raise self.unknown_opcode(raw)
