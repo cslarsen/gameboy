@@ -1,6 +1,7 @@
 import readline
 
 from disassembler import disassemble
+from errors import EmulatorError
 from util import (
     format_hex,
     log,
@@ -191,5 +192,5 @@ class Debugger(object):
                 self.dispatch(command, args)
             except KeyboardInterrupt:
                 self.newline_on_break = True
-            except RuntimeError as e:
+            except (EmulatorError, RuntimeError) as e:
                 log("\n*** Exception: %s\n" % e)

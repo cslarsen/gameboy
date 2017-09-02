@@ -19,6 +19,10 @@ from util import (
     u8_to_u16,
 )
 
+from errors import (
+    MemoryError,
+)
+
 class Memory(object):
     def __init__(self, length_or_data, randomized=False, readonly=False,
             name=None, offset=0x0):
@@ -51,12 +55,12 @@ class Memory(object):
         try:
             return self.data[index]
         except IndexError:
-            raise IndexError("Out of range address 0x%0.4x for %r" % (index,
+            raise MemoryError("Out of range address 0x%0.4x for %r" % (index,
                 self.name))
 
     def __setitem__(self, index, value):
         if self.readonly:
-            raise RuntimeError("%r: Attempt to write to readonly memory at $%0.4x"
+            raise MemoryError("%r: Attempt to write to readonly memory at $%0.4x"
                     % (self.name, index))
         self.data[index] = value
 
@@ -106,7 +110,7 @@ class MemoryController(object):
         if address <= 0xffff:
             return self.internal_work_ram, 0xc000
 
-        raise IndexError("Invalid memory address 0x%x" % address)
+        raise MemoryError("Invalid memory address 0x%x" % address)
 
     def __getitem__(self, address):
         """Reads one byte from memory."""
@@ -124,12 +128,12 @@ class MemoryController(object):
 
         memory, offset = self._memory_map(address)
         if address < offset:
-            raise IndexError("%r: Adress 0x%0.4x less than offset 0x%0.4x" % (
+            raise MemoryError("%r: Adress 0x%0.4x less than offset 0x%0.4x" % (
                 memory.name, address, offset))
         if (address - offset) < len(memory):
             return memory[address - offset]
         else:
-            raise IndexError(
+            raise MemoryError(
 "%r: Invalid address=0x%0.4x - offset=0x%0.4x = 0x%0.4x, length 0x%0.4x" % (
     memory.name, address, offset, address - offset, len(memory)))
 
@@ -152,7 +156,7 @@ class MemoryController(object):
             self.display.BGPAL = value
             return
         if address == 0xff50:
-            raise NotImplementedError("DMG ROM turned off, boot code ran to finish!")
+            raise MemoryError("DMG ROM turned off, boot code ran to finish!")
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value

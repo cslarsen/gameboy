@@ -7,6 +7,7 @@ from __init__ import __copyright__
 from cartridge import Cartridge
 from debugger import Debugger
 from disassembler import disassemble
+from errors import EmulatorError
 from gameboy import Gameboy
 from util import load_binary, log
 
@@ -95,11 +96,11 @@ def main():
         else:
             try:
                 gameboy.cpu.run()
-            except KeyboardInterrupt:
-                log("Emulated at %.1f MHz" % gameboy.cpu.emulated_MHz)
-                raise
+            except EmulatorError as e:
+                log("\n** Exception: %s" % e)
+                Debugger(gameboy).run()
             except Exception as e:
-                log("\n\n*** Exception: %s" % e)
+                log("\n** Exception: %s" % e)
                 gameboy.cpu.print_registers()
                 log("")
                 raise
@@ -110,5 +111,5 @@ if __name__ == "__main__":
 
     try:
         main()
-    except StopIteration:
+    except (KeyboardInterrupt, StopIteration):
         pass

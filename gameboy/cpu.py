@@ -16,6 +16,10 @@ from util import (
     u8_to_u16,
 )
 
+from errors import (
+    OpcodeError,
+)
+
 from opcodes import (
     add_0xff00_opcodes,
     extended_opcodes,
@@ -24,6 +28,7 @@ from opcodes import (
 )
 
 from instructions import (
+    inc16,
     swap8,
 )
 
@@ -65,7 +70,7 @@ class CPU(object):
         try:
             name, bytelen, type, cycles, flags = opcodes[opcode]
         except KeyError:
-            raise RuntimeError("Unknown opcode 0x%0.2x at $%0.4x" % (opcode,
+            raise OpcodeError("Unknown opcode 0x%0.2x at $%0.4x" % (opcode,
                 self.PC))
 
         raw = [opcode]
@@ -221,19 +226,21 @@ class CPU(object):
         else:
             self.F &= ~(1<<4)
 
-    def error_message(self, prefix, raw, arg=None):
+    def error_message(self, prefix, raw=None, arg=None):
+        if raw is None:
+            raw = []
         message = "%s instruction %s" % (prefix, " ".join(map(lambda x:
             "0x%0.2x" % x, raw)))
         if arg is not None:
             message += " with argument %s" % format_hex(arg)
         return message
 
-    def unknown_opcode(self):
-        return RuntimeError("$%0.4x: %s\n" % (self.PC,
-            self.error_message("Unknown")))
+    def unknown_opcode(self, *args, **kw):
+        return EmulatorError("Right before $%0.4x: %s\n" % (self.PC,
+            self.error_message("Unknown", *args, **kw)))
 
     def not_implemented(self):
-        return NotImplementedError(self.error_message("Not implemented"))
+        return EmulatorError(self.error_message("Not implemented"))
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         Z = None
@@ -276,13 +283,13 @@ class CPU(object):
                 self.A = swap8(self.A)
                 Z = (self.A == 0)
             else:
-                raise self.unknown_opcode()
+                raise self.unknown_opcode(raw)
         elif raw[0] == 0x10:
             if opcode == 0x10: # STOP
                 # Halt CPU/LCD display until button pressed
                 raise self.not_implemented()
             else:
-                raise self.unknown_opcode()
+                raise self.unknown_opcode(raw)
         else:
             # Ordinary instructions
             if opcode == 0x00: # NOP
@@ -294,6 +301,48 @@ class CPU(object):
             elif opcode == 0xaf: # XOR A
                 self.A = 0
                 Z = True
+
+            elif opcode == 0x2a: # LD A, (HL+)
+                self.A = self.memory[self.HL]
+                self.HL = inc16(self.HL)
+
+            elif opcode == 0xb0: # OR B
+                self.A |= self.B
+                zero = self.A == 0
+
+            elif opcode == 0xb1: # OR C
+                self.A |= self.C
+                zero = self.A == 0
+
+            elif opcode == 0xb2: # OR D
+                self.A |= self.D
+                zero = self.A == 0
+
+            elif opcode == 0xb3: # OR E
+                self.A |= self.E
+                zero = self.A == 0
+
+            elif opcode == 0xb4: # OR H
+                self.A |= self.H
+                zero = self.A == 0
+
+            elif opcode == 0xb5: # OR L
+                self.A |= self.L
+                zero = self.A == 0
+
+            elif opcode == 0xb6: # OR (HL)
+                self.A |= self.memory[self.HL]
+                zero = self.A == 0
+
+            elif opcode == 0xb7: # OR A
+                self.A |= self.A # NOTE: No-op statement really
+                zero = self.A == 0
+
+            elif opcode == 0xf6: # OR d8
+                self.A |= arg
+                # NOTE: CPU guide says flags should be updated, but that other
+                # guide says no
+                zero = self.A == 0
 
             elif opcode == 0x3e: # LD A, d8
                 self.A = arg
@@ -562,7 +611,7 @@ class CPU(object):
                 self.memory[self.HL] = arg
 
             else:
-                raise self.unknown_opcode()
+                raise self.unknown_opcode(raw)
 
         # Update flags after executing the instruction
         if flags is not None:

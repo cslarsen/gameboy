@@ -26,8 +26,8 @@ class Cartridge(object):
         return sum(map(len, self.rom_bank))
 
     def __repr__(self):
-        return "<Cartridge: title=%r type=%r bytes=0x%x>" % (
-                self.title, self.type, len(self))
+        return "<Cartridge: title=%r type=%r bytes=$%x ROM size=$%x, RAM size=$%x>" % (
+                self.title, self.type, len(self), self.rom_size, self.ram_size)
 
     @property
     def title(self):
@@ -37,6 +37,14 @@ class Cartridge(object):
         if "\0" in s:
             s = s[:s.index("\0")]
         return s
+
+    @property
+    def rom_size(self):
+        return self.rom_bank[0][0x148]
+
+    @property
+    def ram_size(self):
+        return self.rom_bank[0][0x149]
 
     @property
     def type(self):
