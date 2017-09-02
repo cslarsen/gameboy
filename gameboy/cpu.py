@@ -17,6 +17,7 @@ from util import (
 )
 
 from errors import (
+    EmulatorError,
     OpcodeError,
 )
 

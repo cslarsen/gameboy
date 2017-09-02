@@ -171,3 +171,10 @@ Today's screenshot:
 Above is a debugger listing for a game. Can you guess which one? It is entirely
 possible to find out by studying the debug output, and shouldn't be too hard
 once you get it.
+
+Day 8
+-----
+
+Another day where I can only spend a really small amount of time on the
+project. Running errors now break into the debugger, and I implemented bank
+switching. Concentrating on finishing up the rest of the instructions.

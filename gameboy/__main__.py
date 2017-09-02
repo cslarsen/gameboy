@@ -97,10 +97,10 @@ def main():
             try:
                 gameboy.cpu.run()
             except EmulatorError as e:
-                log("\n** Exception: %s" % e)
+                log("\n** Exception: %s" % str(e).strip())
                 Debugger(gameboy).run()
             except Exception as e:
-                log("\n** Exception: %s" % e)
+                log("\n** Exception: %s" % str(e).strip())
                 gameboy.cpu.print_registers()
                 log("")
                 raise

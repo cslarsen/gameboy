@@ -13,6 +13,7 @@ TODO: Provide a better mapping of special memory locations such as 0xff44.
 """
 
 from util import (
+    log,
     make_array,
     make_randomized_array,
     u16_to_u8,
@@ -157,6 +158,12 @@ class MemoryController(object):
             return
         if address == 0xff50:
             raise MemoryError("DMG ROM turned off, boot code ran to finish!")
+
+        if address < 0x8000:
+            # Write to ROM is a request for bank-switching
+            log("Switching home to ROM bank %d" % value)
+            self.home = self.cartridge.rom_bank[value]
+            return
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
