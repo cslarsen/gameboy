@@ -611,39 +611,39 @@ class CPU(object):
                 self.memory[self.HL] = arg
 
             elif opcode == 0xa0: # AND B
-                self.A = self.B & self.A
+                self.A &= self.B
                 Z = self.A == 0
 
             elif opcode == 0xa1: # AND C
-                self.A = self.C & self.A
+                self.A &= self.C
                 Z = self.A == 0
 
             elif opcode == 0xa2: # AND D
-                self.A = self.D & self.A
+                self.A &= self.D
                 Z = self.A == 0
 
             elif opcode == 0xa3: # AND E
-                self.A = self.E & self.A
+                self.A &= self.E
                 Z = self.A == 0
 
             elif opcode == 0xa4: # AND H
-                self.A = self.H & self.A
+                self.A &= self.H
                 Z = self.A == 0
 
             elif opcode == 0xa5: # AND L
-                self.A = self.L & self.A
+                self.A &= self.L
                 Z = self.A == 0
 
             elif opcode == 0xa6: # AND (HL)
-                self.A = self.memory[self.HL] & self.A
+                self.A &= self.memory[self.HL]
                 Z = self.A == 0
 
             elif opcode == 0xa7: # AND A
-                self.A = self.A & self.A
+                # A & A = A
                 Z = self.A == 0
 
             elif opcode == 0xe6: # AND d8
-                self.A = arg & self.A
+                self.A &= arg
                 Z = self.A == 0
 
             elif opcode == 0xa8: # XOR B
@@ -677,6 +677,10 @@ class CPU(object):
             elif opcode == 0xaf: # XOR A
                 self.A = 0
                 Z = True
+
+            elif opcode == 0xee: # XOR d8
+                self.A ^= arg
+                Z = self.A == 0
 
             else:
                 raise self.unknown_opcode(raw)
