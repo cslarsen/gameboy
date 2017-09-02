@@ -263,8 +263,8 @@ class CPU(object):
         return EmulatorError("Right before $%0.4x: %s\n" % (self.PC,
             self.error_message("Unknown", *args, **kw)))
 
-    def not_implemented(self):
-        return EmulatorError(self.error_message("Not implemented"))
+    def not_implemented(self, raw=None, arg=None):
+        return EmulatorError(self.error_message("Not implemented", raw, arg))
 
     def execute(self, opcode, length, cycles, flags, raw, arg=None):
         Z = None
@@ -306,12 +306,17 @@ class CPU(object):
             elif opcode == 0x37: # SWAP A
                 self.A = swap8(self.A)
                 Z = (self.A == 0)
+            elif opcode == 0x1b: # RR E
+                C = (self.E & 0x1)
+                self.E = (self.E >> 1) & 0xff
+                self.E |= (self.C_flag << 7)
+                Z = (self.E == 0)
             else:
                 raise self.unknown_opcode(raw)
         elif raw[0] == 0x10:
             if opcode == 0x10: # STOP
                 # Halt CPU/LCD display until button pressed
-                raise self.not_implemented()
+                raise self.not_implemented(raw, arg)
             else:
                 raise self.unknown_opcode(raw)
         else:
@@ -448,7 +453,7 @@ class CPU(object):
 
             elif opcode == 0x76: # HALT
                 # Power down CPU until an interrupt occurs (for energy saving)
-                raise self.not_implemented()
+                raise self.not_implemented(raw, arg)
 
             elif opcode == 0x77: # LD (HL), A
                 self.memory[self.HL] = self.A
@@ -575,11 +580,11 @@ class CPU(object):
                     cycles = cycles[1]
 
             elif opcode == 0x20: # JR NZ, r8
-                if self.Z_flag:
-                    cycles = cycles[1]
-                else:
+                if not self.Z_flag:
                     cycles = cycles[0]
                     self.jmp(self.PC + arg)
+                else:
+                    cycles = cycles[1]
 
             elif opcode == 0x2e: # LD L, d8
                 self.L = arg
@@ -629,6 +634,13 @@ class CPU(object):
             elif opcode == 0xc9: # RET
                 self.ret()
 
+            elif opcode == 0xc0: # RET NZ
+                if not self.Z_flag:
+                    cycles = cycles[1]
+                    self.ret()
+                else:
+                    cycles = cycles[0]
+
             elif opcode == 0xcc: # CALL Z, a16
                 if self.Z_flag:
                     cycles = cycles[0]
@@ -640,7 +652,9 @@ class CPU(object):
                 self.call(arg)
 
             elif opcode == 0xce: # ADD A, d8
-                raise self.not_implemented()
+                self.A = (self.A + arg) % 0xff
+                Z = self.A == 0
+                # TODO: Set C, H
 
             elif opcode == 0xd9: # RETI
                 self.ret()

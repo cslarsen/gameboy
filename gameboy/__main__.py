@@ -90,7 +90,7 @@ def main():
             # Set up registers and so on in the state it would be in after
             # completing the Nintendo boot code.
 
-            gameboy.cpu.AF = 0x0001
+            gameboy.cpu.AF = 0x01B0
             gameboy.cpu.BC = 0x0013
             gameboy.cpu.DE = 0x00d8
             gameboy.cpu.HL = 0x014f
