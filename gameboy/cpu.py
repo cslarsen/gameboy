@@ -62,6 +62,24 @@ class CPU(object):
         self.total_cycles = 0
         self.start = time.clock()
 
+    def push(self, nn):
+        self.memory.set16(self.SP, nn)
+        self.SP = (self.SP - 2) % 0xffff
+
+    def pop(self):
+        self.SP = (self.SP + 2) % 0xffff
+        return self.memory.get16(self.SP)
+
+    def call(self, nn):
+        self.push(self.PC)
+        self.PC = nn
+
+    def ret(self):
+        self.PC = self.pop()
+
+    def jmp(self, nn):
+        self.PC = nn % 0xffff
+
     def fetch(self):
         opcode = self.memory[self.PC]
         return opcode
@@ -297,7 +315,7 @@ class CPU(object):
                 pass
 
             elif opcode == 0xc3: # JP a16
-                self.PC = arg
+                self.jmp(arg)
 
             elif opcode == 0x2a: # LD A, (HL+)
                 self.A = self.memory[self.HL]
@@ -460,12 +478,12 @@ class CPU(object):
                 # TODO: Set half carry
 
             elif opcode == 0x18: # JR r8
-                self.PC = (self.PC + arg) % 0xffff
+                self.jmp(self.PC + arg)
 
             elif opcode == 0x28: # JR Z, r8
                 if self.Z_flag:
                     cycles = cycles[0]
-                    self.PC = (self.PC + arg) % 0xffff
+                    self.jmp(self.PC + arg)
                 else:
                     cycles = cycles[1]
 
@@ -474,7 +492,7 @@ class CPU(object):
                     cycles = cycles[1]
                 else:
                     cycles = cycles[0]
-                    self.PC = (self.PC + arg) % 0xffff
+                    self.jmp(self.PC + arg)
 
             elif opcode == 0x2e: # LD L, d8
                 self.L = arg
@@ -523,36 +541,30 @@ class CPU(object):
                 raise self.not_implemented()
 
             elif opcode == 0xc1: # POP BC
-                self.SP = (self.SP + 0x10) % 0xffff
-                self.BC = self.memory.get16(self.SP)
+                self.BC = self.pop()
 
             elif opcode == 0xc5: # PUSH BC
-                self.memory.set16(self.SP, self.BC)
-                self.SP = (self.SP - 0x10) % 0xffff
+                self.push(self.BC)
 
             elif opcode == 0xc9: # RET
-                self.SP = (self.SP + 0x10) % 0xffff
-                self.PC = self.memory.get16(self.SP)
+                self.ret()
 
             elif opcode == 0xcc: # CALL Z, a16
                 if self.Z_flag:
-                    self.memory.set16(self.SP, self.PC)
-                    self.SP = (self.SP - 0x10) % 0xffff
-                    self.PC = arg
                     cycles = cycles[0]
+                    self.call(arg)
                 else:
                     cycles = cycles[1]
 
             elif opcode == 0xcd: # CALL a16
-                self.memory.set16(self.SP, self.PC)
-                self.SP = (self.SP - 0x10) % 0xffff
-                self.PC = arg
+                self.call(arg)
 
             elif opcode == 0xce: # ADD A, d8
                 raise self.not_implemented()
 
             elif opcode == 0xd9: # RETI
-                raise self.not_implemented()
+                self.ret()
+                self.enable_interrupts()
 
             elif opcode == 0xea: # LD (a16), A
                 self.memory[arg] = self.A
@@ -561,12 +573,7 @@ class CPU(object):
                 self.A = self.memory[arg]
 
             elif opcode == 0xf3: # DI
-                self.interrupts_enabled = False
-
-            elif opcode == 0xf7: # RST 30H
-                self.memory.set16(self.SP, self.PC)
-                self.SP = (self.SP - 0x10) % 0xffff
-                self.PC = self.memory[0x0030]
+                self.disable_interrupts()
 
             elif opcode == 0xf9: # LD SP, HL
                 self.SP = self.HL
@@ -575,7 +582,7 @@ class CPU(object):
                 self.A = self.memory[arg]
 
             elif opcode == 0xfb: # EI
-                self.interrupts_enabled = True
+                self.enable_interrupts()
 
             elif opcode == 0xfe: # CP d8
                 result = (self.A - arg) % 0xff
@@ -583,10 +590,11 @@ class CPU(object):
                 C = (self.A < arg)
                 # TODO: set H
 
+            elif opcode == 0xf7: # RST 30H
+                self.call(self.memory[0x30])
+
             elif opcode == 0xff: # RST 38H
-                self.memory.set16(self.SP, self.PC)
-                self.SP = (self.SP - 0x10) % 0xffff
-                self.PC = self.memory[0x0038]
+                self.call(self.memory[0x38])
 
             elif opcode == 0x90: # SUB B
                 self.A = (self.A - self.B) % 0xff
