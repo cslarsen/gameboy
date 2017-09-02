@@ -39,6 +39,7 @@ moment. Anyway, the code is entirely unoptimized at this stage.
 References
 ==========
 
+  * [ARM Processor Wiki](https://www.heyrick.co.uk/armwiki/Main_Page)
   * [Duo's GameBoy Memory Map](http://gameboy.mongenel.com/dmg/asmmemmap.html)
   * [Game Boy™ CPU Manual](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
   * [Gameboy Bootstrap ROM](http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM)
@@ -46,6 +47,7 @@ References
   * [Gameboy on Wikipedia](https://en.wikipedia.org/wiki/Game_Boy)
   * [GameBoy Programming Info](https://fms.komkon.org/GameBoy/Tech/Software.html)
   * [GameBoy Programming Manual](http://www.chrisantonellis.com/files/gameboy/gb-programming-manual.pdf)
+  * [Hacker's Delight](http://www.hackersdelight.org)
   * [Pan Docs](http://bgb.bircd.org/pandocs.htm#cpuinstructionset)
   * [The Game Boy Project](http://marc.rawer.de/Gameboy/Docs/GBProject.pdf)
 

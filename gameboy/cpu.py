@@ -57,10 +57,15 @@ class CPU(object):
         self.PC = 0
         self.SP = 0
 
+        # Interrupts Maske Enable flag
+        # TODO: Implement all flags and the rest of the interrupt system
+        self.IME = False
+
         # Amount of cycles spent
         self.cycles = 0
         self.total_cycles = 0
         self.start = time.clock()
+
 
     def push(self, nn):
         self.memory.set16(self.SP, nn)
@@ -375,10 +380,38 @@ class CPU(object):
                 self.memory[self.HL] = self.A
                 self.HL = (self.HL - 1) % 0xffff
 
+            elif opcode == 0x70: # LD (HL), B
+                self.memory[self.HL] = self.B
+
+            elif opcode == 0x71: # LD (HL), C
+                self.memory[self.HL] = self.C
+
+            elif opcode == 0x72: # LD (HL), D
+                self.memory[self.HL] = self.D
+
+            elif opcode == 0x73: # LD (HL), E
+                self.memory[self.HL] = self.E
+
+            elif opcode == 0x74: # LD (HL), H
+                self.memory[self.HL] = self.H
+
+            elif opcode == 0x75: # LD (HL), L
+                self.memory[self.HL] = self.L
+
+            elif opcode == 0x76: # HALT
+                # Power down CPU until an interrupt occurs (for energy saving)
+                raise self.not_implemented()
+
             elif opcode == 0x77: # LD (HL), A
                 self.memory[self.HL] = self.A
 
             elif opcode == 0x78: # LD A, B
+                self.A = self.B
+
+            elif opcode == 0x79: # LD A, C
+                self.A = self.C
+
+            elif opcode == 0x7a: # LD A, B
                 self.A = self.B
 
             elif opcode == 0x7b: # LD A, E
@@ -389,6 +422,12 @@ class CPU(object):
 
             elif opcode == 0x7d: # LD A, L
                 self.A = self.L
+
+            elif opcode == 0x7e: # LD A, (HL)
+                self.A = self.memory[self.HL]
+
+            elif opcode == 0x7f: # LD A, A
+                pass
 
             elif opcode == 0xe2: # LD ($ff00+C), A
                 self.memory[(0xff00 + self.C) % 0xffff] = self.A
@@ -533,13 +572,6 @@ class CPU(object):
             elif opcode == 0x6e: # LD L, (HL)
                 self.L = self.memory[self.HL]
 
-            elif opcode == 0x73: # LD (HL), E
-                self.memory[self.HL] = self.E
-
-            elif opcode == 0x76: # HALT
-                # Power down CPU until an interrupt occurs (for energy saving)
-                raise self.not_implemented()
-
             elif opcode == 0xc1: # POP BC
                 self.BC = self.pop()
 
@@ -564,16 +596,16 @@ class CPU(object):
 
             elif opcode == 0xd9: # RETI
                 self.ret()
-                self.enable_interrupts()
+                self.IME = True
 
             elif opcode == 0xea: # LD (a16), A
                 self.memory[arg] = self.A
 
+            elif opcode == 0xef: # RST 28H
+                self.call(self.memory[0x28])
+
             elif opcode == 0xf0: # LDH A, (a8)
                 self.A = self.memory[arg]
-
-            elif opcode == 0xf3: # DI
-                self.disable_interrupts()
 
             elif opcode == 0xf9: # LD SP, HL
                 self.SP = self.HL
@@ -581,8 +613,11 @@ class CPU(object):
             elif opcode == 0xfa: # LD A, (a16)
                 self.A = self.memory[arg]
 
+            elif opcode == 0xf3: # DI
+                self.IME = False
+
             elif opcode == 0xfb: # EI
-                self.enable_interrupts()
+                self.IME = True
 
             elif opcode == 0xfe: # CP d8
                 result = (self.A - arg) % 0xff
@@ -600,6 +635,54 @@ class CPU(object):
                 self.A = (self.A - self.B) % 0xff
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
+
+            elif opcode == 0x98: # SBC A, B
+                n = self.B + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x99: # SBC A, C
+                n = self.C + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9a: # SBC A, D
+                n = self.D + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9b: # SBC A, E
+                n = self.E + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9c: # SBC A, H
+                n = self.H + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9d: # SBC A, L
+                n = self.L + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9e: # SBC A, (HL)
+                n = self.memory[self.HL] + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
+
+            elif opcode == 0x9f: # SBC A, A
+                n = self.A + self.C_flag
+                self.A = (self.A - n) % 0xff
+                Z = self.A == 0
+                # TODO H/C flags
 
             elif opcode == 0xbe: # CP (HL)
                 result = (self.A - self.memory[self.HL]) % 0xff
