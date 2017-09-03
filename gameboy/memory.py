@@ -169,7 +169,8 @@ class MemoryController(object):
                 self.home = self.cartridge.rom_bank[value]
                 return
             except IndexError:
-                raise MemoryError("Invalid ROM bank $%0.2x" % value)
+                log("Warning: Invalid ROM bank $%0.2x, ignoring" % value)
+                return
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
