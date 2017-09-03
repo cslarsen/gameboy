@@ -184,7 +184,7 @@ class CPU(object):
 
     @HL.setter
     def HL(self, value):
-        self.H, self.L = u16_to_u8(value)
+        self.H, self.L = u16_to_u8(value % 0xffff)
 
     @property
     def DE(self):
@@ -192,7 +192,7 @@ class CPU(object):
 
     @DE.setter
     def DE(self, value):
-        self.D, self.E = u16_to_u8(value)
+        self.D, self.E = u16_to_u8(value % 0xffff)
 
     @property
     def BC(self):
@@ -306,11 +306,6 @@ class CPU(object):
             elif opcode == 0x37: # SWAP A
                 self.A = swap8(self.A)
                 Z = (self.A == 0)
-            elif opcode == 0x1b: # RR E
-                C = (self.E & 0x1)
-                self.E = (self.E >> 1) & 0xff
-                self.E |= (self.C_flag << 7)
-                Z = (self.E == 0)
             else:
                 raise self.unknown_opcode(raw)
         elif raw[0] == 0x10:
@@ -323,13 +318,301 @@ class CPU(object):
             # Ordinary instructions
             if opcode == 0x00: # NOP
                 pass
-
-            elif opcode == 0xc3: # JP a16
-                self.jmp(arg)
-
+            elif opcode == 0x01: # LD BC, d16
+                self.BC = arg
+            elif opcode == 0x02: # LD (BC), A
+                self.memory[self.BC] = self.A
+            elif opcode == 0x03: # INC BC
+                self.BC += 1
+            elif opcode == 0x04: # INC B
+                self.B = (self.B + 1) % 0xff
+                Z = (self.B == 0)
+                # TODO: Set half carry
+            elif opcode == 0x05: # DEC B
+                H = (self.B % 0xf) == 0b0000 # TODO: Ok?
+                self.B = (self.B - 1) % 0xff
+                Z = (self.B == 0)
+                # TODO: Implement half-carry flag
+            elif opcode == 0x06: # LD B, d8
+                self.B = arg
+            elif opcode == 0x07: # RLCA
+                self.C_flag = (self.A & (1<<7)) >> 7
+                self.A = (self.A << 1) % 0xff
+            elif opcode == 0x08: # LD (a16), SP
+                self.memory.set16(arg, self.SP)
+            elif opcode == 0x09: # ADD HL, BC
+                self.HL += self.BC
+                # TOTO: Set H, C
+            elif opcode == 0x0a: # LD A, (BC)
+                self.A = self.memory[self.BC]
+            elif opcode == 0x0b: # DEC BC
+                self.BC = (self.BC - 1) % 0xffff
+            elif opcode == 0x0c: # INC C
+                self.C = (self.C + 1) % 0xff
+                Z = (self.C == 0)
+                # TODO: Set half carry
+            elif opcode == 0x0d: # DEC C
+                self.C = (self.C - 1) % 0xff
+                Z = (self.C == 0)
+                # TODO: set H flag
+            elif opcode == 0x0e: # LD C, d8
+                self.C = arg
+            elif opcode == 0x0f: # RRCA
+                C = (self.A & 0x1)
+                self.A = (self.A >> 1) & 0xff
+                self.A |= (self.C_flag << 7)
+                Z = (self.A == 0)
+            elif opcode == 0x10: # STOP
+                # The fetch/decode should handle stop as a two-byte 0x10 0x00
+                # instruction.
+                raise EmulatorError("STOP")
+                pass
+            elif opcode == 0x11: # LD DE, d16
+                self.DE = arg
+            elif opcode == 0x12: # LD (DE), A
+                self.memory[self.DE] = self.A
+            elif opcode == 0x13: # INC DE
+                self.DE = (self.DE + 1) % 0xffff
+            elif opcode == 0x14:  # INC D
+                H = self.D == 0xf # TODO: Fix
+                self.D = (self.D + 1) % 0xff
+                Z = self.D == 0
+            elif opcode == 0x15: # DEC D
+                self.D = (self.D - 1) % 0xff
+                Z = (self.D == 0)
+                # TODO: set H flag
+            elif opcode == 0x16: # LD D, d8
+                self.D = arg
+            elif opcode == 0x17: # RLA
+                C = (self.A & (1<<7)) >> 7
+                self.A = (self.A << 1) & 0xff
+                self.A |= self.C_flag
+                Z = (self.A == 0)
+            elif opcode == 0x18: # JR r8
+                self.jmp(self.PC + arg)
+            elif opcode == 0x19: # ADD HL, DE
+                self.HL += self.DE
+            elif opcode == 0x1a: # LD A, (DE)
+                self.A = self.memory[self.DE]
+            elif opcode == 0x1b: # RR E
+                C = (self.E & 0x1)
+                self.E = (self.E >> 1) & 0xff
+                self.E |= (self.C_flag << 7)
+                Z = (self.E == 0)
+            elif opcode == 0x1c: # INC E
+                H = self.E == 0xf # TODO: fix
+                self.E = (self.E + 1) % 0xff
+                Z = self.E == 0
+            elif opcode == 0x1d: # DEC E
+                self.E = (self.E - 1) % 0xff
+                Z = (self.E == 0)
+                # TODO: set H flag
+            elif opcode == 0x1e: # LD E, d8
+                self.E = arg
+            elif opcode == 0x1f: # RRA
+                raise self.not_implemented(raw, arg)
+            elif opcode == 0x20: # JR NZ, r8
+                if not self.Z_flag:
+                    cycles = cycles[0]
+                    self.jmp(self.PC + arg)
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0x21: # LD HL, d16
+                self.HL = arg
+            elif opcode == 0x22: # LD (HL+), A
+                self.memory[self.HL] = self.A
+                self.HL = (self.HL + 1) % 0xffff
+            elif opcode == 0x23: # INC HL
+                self.HL = (self.HL + 1) % 0xffff
+            elif opcode == 0x24: # INC H
+                self.H = (self.H + 1) % 0xff
+                Z = (self.H == 0)
+                # TODO: Set half carry
+            elif opcode == 0x25: # DEC H
+                self.H = (self.H - 1) % 0xff
+                Z = self.H == 0
+                # TODO: Set H flag
+            elif opcode == 0x26: # LD H, d8
+                self.H = arg
+            elif opcode == 0x27: # DAA
+                raise self.not_implemented(raw, arg)
+            elif opcode == 0x28: # JR Z, r8
+                if self.Z_flag:
+                    cycles = cycles[0]
+                    self.jmp(self.PC + arg)
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0x29:
+                raise self.not_implemented(raw, arg)
             elif opcode == 0x2a: # LD A, (HL+)
                 self.A = self.memory[self.HL]
                 self.HL = inc16(self.HL)
+            elif opcode == 0x2b: # DEC HL
+                self.HL -= 1
+            elif opcode == 0x2c: # INC L
+                self.L = (self.L + 1) % 0xff
+                Z = self.L == 0
+                # TODO: Set H
+            elif opcode == 0x2d: # DEC L
+                self.L = (self.L - 1) % 0xff
+                Z = self.L == 0
+                # TODO: Set H
+            elif opcode == 0x2e: # LD L, d8
+                self.L = arg
+            elif opcode == 0x2f: # CPL
+                self.A = ~self.A & 0xff
+            elif opcode == 0x30: # JR NC, r8
+                if not self.C_flag:
+                    cycles = cycles[0]
+                    self.jmp(self.PC + arg)
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0x31: # LD SP, d16
+                self.SP = arg
+            elif opcode == 0x32: # LD (HL-), A
+                self.memory[self.HL] = self.A
+                self.HL = (self.HL - 1) % 0xffff
+            elif opcode == 0x33: # INC SP
+                self.SP = (self.SP + 1) % 0xffff
+                Z = (self.SP == 0)
+                # TODO: Set H flag
+            elif opcode == 0x34:
+                raise self.not_implemented(raw, arg)
+            elif opcode == 0x35: # DEC (HL)
+                n = (self.memory[self.HL] - 1) % 0xff
+                self.memory[self.HL] = n
+                Z = n == 0
+                # TODO: Set H
+            elif opcode == 0x36: # LD (HL), d8
+                self.memory[self.HL] = arg
+            elif opcode == 0x37:  # SCF
+                pass # flag is automatically set below
+            elif opcode == 0x38: # JR C, r8
+                if self.C_flag:
+                    cycles = cycles[0]
+                    self.jmp(self.PC + arg)
+                else:
+                    cycles = cycles[1]
+            elif opcode == 0x39: # ADD HL, SP
+                self.HL += self.SP
+                # TODO: Set H and C
+            elif opcode == 0x3a: # LD A, (HL-)
+                self.A = self.memory[self.HL]
+                self.HL -= 1
+            elif opcode == 0x3b: # DEC SP
+                self.SP = (self.SP - 1) % 0xffff
+            elif opcode == 0x3c: # INC A
+                H = (self.A & 0xf) == 0b1111 # TODO: Correct?
+                self.A = (self.A + 1) % 0xff
+                Z = (self.A == 0)
+            elif opcode == 0x3d: # DEC A
+                self.A = (self.A - 1) % 0xff
+                Z = (self.A == 0)
+                # TODO: set H flag
+            elif opcode == 0x3e: # LD A, d8
+                self.A = arg
+            elif opcode == 0x3f: # CCF
+                self.C_flag = not self.C_flag
+            elif opcode == 0x40:  # LD B, B
+                pass
+            elif opcode == 0x41: # LD B, C
+                self.B = self.C
+            elif opcode == 0x42: # LD B, D
+                self.B = self.D
+            elif opcode == 0x43: # LD B, E
+                self.B = self.E
+            elif opcode == 0x44 : # LD B, H
+                self.B = self.H
+            elif opcode == 0x45: # LD B, L
+                self.B = self.L
+            elif opcode == 0x46: # LD B, (HL)
+                self.B = self.memory[self.HL]
+            elif opcode == 0x47: # LD B, A
+                self.B = self.A
+            elif opcode == 0x48: # LD C, B
+                self.C == self.B
+            elif opcode == 0x49: # LD C, C
+                pass
+            elif opcode == 0x4a: # LD C, D
+                self.C = self.D
+            elif opcode == 0x4b: # LD C, E
+                self.C = self.E
+            elif opcode == 0x4c: # LD C, H
+                self.C == self.H
+            elif opcode == 0x4d: # LD C, L
+                self.C = self.L
+            elif opcode == 0x4e: # LD C, (HL)
+                self.C = self.memory[self.HL]
+            elif opcode == 0x4f: # LD C, A
+                self.C = self.A
+            elif opcode == 0x50: # LD D, B
+                self.D = self.B
+            elif opcode == 0x51: # LD D, C
+                self.D = self.C
+            elif opcode == 0x52: # LD D, D
+                pass
+            elif opcode == 0x53: # LD D, E
+                self.D = self.E
+            elif opcode == 0x54: # LD D, H
+                self.D = self.H
+            elif opcode == 0x55: # LD D, L
+                self.D = self.L
+            elif opcode == 0x56: # LD D, (HL)
+                self.D = self.memory[self.HL]
+            elif opcode == 0x57: # LD D, A
+                self.D = self.A
+            elif opcode == 0x58: # LD E, B
+                self.E = self.B
+            elif opcode == 0x59: # LD E, C
+                self.E = self.C
+            elif opcode == 0x5a: # LD E, D
+                self.E = self.D
+            elif opcode == 0x5b: # LD E, E
+                pass
+            elif opcode == 0x5c: # LD E, H
+                self.E = self.H
+            elif opcode == 0x5d: # LD E, L
+                self.E = self.L
+            elif opcode == 0x5e: # LD E, (HL)
+                self.E = self.memory[self.HL]
+            elif opcode == 0x5f: # LD E, A
+                self.E = self.A
+            elif opcode == 0x60: # LD H, B
+                self.H = self.B
+            elif opcode == 0x61: # LD H, C
+                self.H = self.C
+            elif opcode == 0x62: # LD H, D
+                self.H = self.D
+            elif opcode == 0x63: # LD H, E
+                self.H = self.E
+            elif opcode == 0x64: # LD H, H
+                pass
+            elif opcode == 0x65: # LD H, L
+                self.H = self.L
+            elif opcode == 0x66: # LD H, (HL)
+                self.H = self.memory[self.HL]
+            elif opcode == 0x67: # LD H, A
+                self.H = self.A
+            elif opcode == 0x68: # LD L, B
+                self.L = self.B
+            elif opcode == 0x69: # LD L, C
+                self.L = self.C
+            elif opcode == 0x6a: # LD L, D
+                self.L = self.D
+            elif opcode == 0x6b: # LD L, E
+                self.L = self.E
+            elif opcode == 0x6c: # LD L, H
+                self.L = self.H
+            elif opcode == 0x6d: # LD L, L
+                pass
+            elif opcode == 0x6e: # LD L, (HL)
+                self.L = self.memory[self.HL]
+            elif opcode == 0x6f: # LD L, A
+                self.L = self.A
+
+
+            elif opcode == 0xc3: # JP a16
+                self.jmp(arg)
 
             elif opcode == 0xb0: # OR B
                 self.A |= self.B
@@ -417,22 +700,6 @@ class CPU(object):
                 C = (self.A < arg)
                 # TODO: set H
 
-            elif opcode == 0x2f: # CPL
-                self.A = ~self.A & 0xff
-
-            elif opcode == 0x3e: # LD A, d8
-                self.A = arg
-
-            elif opcode == 0x21: # LD HL, d16
-                self.HL = arg
-
-            elif opcode == 0x31: # LD SP, d16
-                self.SP = arg
-
-            elif opcode == 0x32: # LD (HL-), A
-                self.memory[self.HL] = self.A
-                self.HL = (self.HL - 1) % 0xffff
-
             elif opcode == 0x70: # LD (HL), B
                 self.memory[self.HL] = self.B
 
@@ -487,227 +754,6 @@ class CPU(object):
 
             elif opcode == 0xe0: # LDH ($ff00+a8), A
                 self.memory[arg] = self.A
-
-            elif opcode == 0x01: # LD BC, d16
-                self.BC = arg
-
-            elif opcode == 0x02: # LD (BC), A
-                self.memory[self.BC] = self.A
-
-            elif opcode == 0x03: # INC BC
-                self.BC += 1
-
-            elif opcode == 0x04: # INC B
-                self.B = (self.B + 1) % 0xff
-                Z = (self.B == 0)
-                # TODO: Set half carry
-
-            elif opcode == 0x05: # DEC B
-                self.B = (self.B - 1) % 0xff
-                Z = (self.B == 0)
-                # TODO: Implement half-carry flag
-
-            elif opcode == 0x06: # LD B, d8
-                self.B = arg
-
-            elif opcode == 0x08: # LD (a16), SP
-                self.memory.set16(arg, self.SP)
-
-            elif opcode == 0x0b: # DEC BC
-                self.BC = (self.BC - 1) % 0xffff
-
-            elif opcode == 0x0c: # INC C
-                self.C = (self.C + 1) % 0xff
-                Z = (self.C == 0)
-                # TODO: Set half carry
-
-            elif opcode == 0x0d: # DEC C
-                self.C = (self.C - 1) % 0xff
-                Z = (self.C == 0)
-                # TODO: set H flag
-
-            elif opcode == 0x0e: # LD C, d8
-                self.C = arg
-
-            elif opcode == 0x11: # LD DE, d16
-                self.DE = arg
-            elif opcode == 0x12: # LD (DE), A
-                self.memory[self.DE] = self.A
-            elif opcode == 0x13: # INC DE
-                self.DE = (self.DE + 1) % 0xffff
-            elif opcode == 0x14:  # INC D
-                H = self.D == 0xf # TODO: Fix
-                self.D = (self.D + 1) % 0xff
-                Z = self.D == 0
-            elif opcode == 0x15: # DEC D
-                self.D = (self.D - 1) % 0xff
-                Z = (self.D == 0)
-                # TODO: set H flag
-            elif opcode == 0x16: # LD D, d8
-                self.D = arg
-            elif opcode == 0x17: # RLA
-                C = (self.A & (1<<7)) >> 7
-                self.A = (self.A << 1) & 0xff
-                self.A |= self.C_flag
-                Z = (self.A == 0)
-
-            elif opcode == 0x1a: # LD A, (DE)
-                self.A = self.memory[self.DE]
-
-            elif opcode == 0x1d: # DEC E
-                self.E = (self.E - 1) % 0xff
-                Z = (self.E == 0)
-                # TODO: set H flag
-
-            elif opcode == 0x1e: # LD E, d8
-                self.E = arg
-
-            elif opcode == 0x22: # LD (HL+), A
-                self.memory[self.HL] = self.A
-                self.HL = (self.HL + 1) % 0xffff
-
-            elif opcode == 0x23: # INC HL
-                self.HL = (self.HL + 1) % 0xffff
-
-            elif opcode == 0x24: # INC H
-                self.H = (self.H + 1) % 0xff
-                Z = (self.H == 0)
-                # TODO: Set half carry
-
-            elif opcode == 0x18: # JR r8
-                self.jmp(self.PC + arg)
-
-            elif opcode == 0x26: # LD H, d8
-                self.H = arg
-
-            elif opcode == 0x28: # JR Z, r8
-                if self.Z_flag:
-                    cycles = cycles[0]
-                    self.jmp(self.PC + arg)
-                else:
-                    cycles = cycles[1]
-
-            elif opcode == 0x20: # JR NZ, r8
-                if not self.Z_flag:
-                    cycles = cycles[0]
-                    self.jmp(self.PC + arg)
-                else:
-                    cycles = cycles[1]
-
-            elif opcode == 0x2e: # LD L, d8
-                self.L = arg
-
-            elif opcode == 0x33: # INC SP
-                self.SP = (self.SP + 1) % 0xffff
-                Z = (self.SP == 0)
-                # TODO: Set H flag
-
-            elif opcode == 0x3c: # INC A
-                self.A = (self.A + 1) % 0xff
-                Z = (self.A == 0)
-                # TODO: set half carry
-
-            elif opcode == 0x3d: # DEC A
-                self.A = (self.A - 1) % 0xff
-                Z = (self.A == 0)
-                # TODO: set H flag
-
-            elif opcode == 0x40:  # LD B, B
-                pass
-            elif opcode == 0x41: # LD B, C
-                self.B = self.C
-            elif opcode == 0x42: # LD B, D
-                self.B = self.D
-            elif opcode == 0x43: # LD B, E
-                self.B = self.E
-            elif opcode == 0x44 : # LD B, H
-                self.B = self.H
-            elif opcode == 0x45: # LD B, L
-                self.B = self.L
-            elif opcode == 0x46: # LD B, (HL)
-                self.B = self.memory[self.HL]
-            elif opcode == 0x47: # LD B, A
-                self.B = self.A
-            elif opcode == 0x48: # LD C, B
-                self.C == self.B
-            elif opcode == 0x49: # LD C, C
-                pass
-            elif opcode == 0x4a: # LD C, D
-                self.C = self.D
-            elif opcode == 0x4b: # LD C, E
-                self.C = self.E
-            elif opcode == 0x4c: # LD C, H
-                self.C == self.H
-            elif opcode == 0x4d: # LD C, L
-                self.C = self.L
-            elif opcode == 0x4e: # LD C, (HL)
-                self.C = self.memory[self.HL]
-            elif opcode == 0x4f: # LD C, A
-                self.C = self.A
-            elif opcode == 0x50: # LD D, B
-                self.D = self.B
-            elif opcode == 0x51: # LD D, C
-                self.D = selc.C
-            elif opcode == 0x52: # LD D, D
-                pass
-            elif opcode == 0x53: # LD D, E
-                self.D = self.E
-            elif opcode == 0x54: # LD D, H
-                self.D = self.H
-            elif opcode == 0x55: # LD D, L
-                self.D = self.L
-            elif opcode == 0x56: # LD D, (HL)
-                self.D = self.memory[self.HL]
-            elif opcode == 0x57: # LD D, A
-                self.D = self.A
-            elif opcode == 0x58: # LD E, B
-                self.E = self.B
-            elif opcode == 0x59: # LD E, C
-                self.E = self.C
-            elif opcode == 0x5a: # LD E, D
-                self.E = self.D
-            elif opcode == 0x5b: # LD E, E
-                pass
-            elif opcode == 0x5c: # LD E, H
-                self.E = self.H
-            elif opcode == 0x5d: # LD E, L
-                self.E = self.L
-            elif opcode == 0x5e: # LD E, (HL)
-                self.E = self.memory[self.HL]
-            elif opcode == 0x5f: # LD E, A
-                self.E = self.A
-            elif opcode == 0x60: # LD H, B
-                self.H = self.B
-            elif opcode == 0x61: # LD H, C
-                self.H = self.C
-            elif opcode == 0x62: # LD H, D
-                self.H = self.D
-            elif opcode == 0x63: # LD H, E
-                self.H = self.E
-            elif opcode == 0x64: # LD H, H
-                pass
-            elif opcode == 0x65: # LD H, L
-                self.H = self.L
-            elif opcode == 0x66: # LD H, (HL)
-                self.H = self.memory[self.HL]
-            elif opcode == 0x67: # LD H, A
-                self.H = self.A
-            elif opcode == 0x68: # LD L, B
-                self.L = self.B
-            elif opcode == 0x69: # LD L, C
-                self.L = self.C
-            elif opcode == 0x6a: # LD L, D
-                self.L = self.D
-            elif opcode == 0x6b: # LD L, E
-                self.L = self.E
-            elif opcode == 0x6c: # LD L, H
-                self.L = self.H
-            elif opcode == 0x6d: # LD L, L
-                pass
-            elif opcode == 0x6e: # LD L, (HL)
-                self.L = self.memory[self.HL]
-            elif opcode == 0x6f: # LD L, A
-                self.L = self.A
 
             elif opcode == 0xc1: # POP BC
                 self.BC = self.pop()
@@ -841,9 +887,6 @@ class CPU(object):
                 Z = (self.A == 0)
                 # TODO: Carry stuff
 
-            elif opcode == 0x36: # LD (HL), d8
-                self.memory[self.HL] = arg
-
             elif opcode == 0xa0: # AND B
                 self.A &= self.B
                 Z = self.A == 0
@@ -915,11 +958,6 @@ class CPU(object):
             elif opcode == 0xee: # XOR d8
                 self.A ^= arg
                 Z = self.A == 0
-
-            elif opcode == 0x1c: # INC E
-                H = self.E == 0xf # TODO: fix
-                self.E = (self.E + 1) % 0xff
-                Z = self.E == 0
 
             else:
                 raise self.unknown_opcode(raw)
