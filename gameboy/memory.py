@@ -163,10 +163,12 @@ class MemoryController(object):
             self.boot_rom_active = False
 
         if address < 0x8000:
-            # Write to ROM is a request for bank-switching
-            log("Switching home to ROM bank %d" % value)
-            self.home = self.cartridge.rom_bank[value]
-            return
+            try:
+                # Write to ROM is a request for bank-switching
+                log("Switching home to ROM bank %d" % value)
+                self.home = self.cartridge.rom_bank[value]
+            except IndexError:
+                raise MemoryError("Invalid ROM bank $0.2x" % value)
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value

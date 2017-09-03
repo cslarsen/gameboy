@@ -528,18 +528,20 @@ class CPU(object):
 
             elif opcode == 0x11: # LD DE, d16
                 self.DE = arg
-
+            elif opcode == 0x12: # LD (DE), A
+                self.memory[self.DE] = self.A
             elif opcode == 0x13: # INC DE
                 self.DE = (self.DE + 1) % 0xffff
-
+            elif opcode == 0x14:  # INC D
+                H = self.D == 0xf # TODO: Fix
+                self.D = (self.D + 1) % 0xff
+                Z = self.D == 0
             elif opcode == 0x15: # DEC D
                 self.D = (self.D - 1) % 0xff
                 Z = (self.D == 0)
                 # TODO: set H flag
-
             elif opcode == 0x16: # LD D, d8
                 self.D = arg
-
             elif opcode == 0x17: # RLA
                 C = (self.A & (1<<7)) >> 7
                 self.A = (self.A << 1) & 0xff
