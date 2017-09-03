@@ -200,7 +200,7 @@ class CPU(object):
 
     @BC.setter
     def BC(self, value):
-        self.B, self.C = u16_to_u8(value)
+        self.B, self.C = u16_to_u8(value % 0xffff)
 
     @property
     def Z_flag(self):
@@ -494,6 +494,9 @@ class CPU(object):
             elif opcode == 0x02: # LD (BC), A
                 self.memory[self.BC] = self.A
 
+            elif opcode == 0x03: # INC BC
+                self.BC += 1
+
             elif opcode == 0x04: # INC B
                 self.B = (self.B + 1) % 0xff
                 Z = (self.B == 0)
@@ -573,6 +576,9 @@ class CPU(object):
 
             elif opcode == 0x18: # JR r8
                 self.jmp(self.PC + arg)
+
+            elif opcode == 0x26: # LD H, d8
+                self.H = arg
 
             elif opcode == 0x28: # JR Z, r8
                 if self.Z_flag:
@@ -829,6 +835,11 @@ class CPU(object):
                 self.A = (self.A + self.memory[self.HL]) % 0xff
                 Z = (self.A == 0)
                 # TODO: Set other flags
+
+            elif opcode == 0x8c: # ADC A, H
+                self.A = (self.A + self.H) % 0xff
+                Z = (self.A == 0)
+                # TODO: Carry stuff
 
             elif opcode == 0x36: # LD (HL), d8
                 self.memory[self.HL] = arg
