@@ -167,8 +167,9 @@ class MemoryController(object):
                 # Write to ROM is a request for bank-switching
                 log("Switching home to ROM bank %d" % value)
                 self.home = self.cartridge.rom_bank[value]
+                return
             except IndexError:
-                raise MemoryError("Invalid ROM bank $0.2x" % value)
+                raise MemoryError("Invalid ROM bank $%0.2x" % value)
 
         memory, offset = self._memory_map(address)
         memory[address - offset] = value
