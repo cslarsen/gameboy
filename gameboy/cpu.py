@@ -604,26 +604,102 @@ class CPU(object):
                 Z = (self.A == 0)
                 # TODO: set H flag
 
+            elif opcode == 0x40:  # LD B, B
+                pass
+            elif opcode == 0x41: # LD B, C
+                self.B = self.C
             elif opcode == 0x42: # LD B, D
                 self.B = self.D
-
+            elif opcode == 0x43: # LD B, E
+                self.B = self.E
+            elif opcode == 0x44 : # LD B, H
+                self.B = self.H
+            elif opcode == 0x45: # LD B, L
+                self.B = self.L
+            elif opcode == 0x46: # LD B, (HL)
+                self.B = self.memory[self.HL]
+            elif opcode == 0x47: # LD B, A
+                self.B = self.A
+            elif opcode == 0x48: # LD C, B
+                self.C == self.B
+            elif opcode == 0x49: # LD C, C
+                pass
+            elif opcode == 0x4a: # LD C, D
+                self.C = self.D
+            elif opcode == 0x4b: # LD C, E
+                self.C = self.E
+            elif opcode == 0x4c: # LD C, H
+                self.C == self.H
+            elif opcode == 0x4d: # LD C, L
+                self.C = self.L
+            elif opcode == 0x4e: # LD C, (HL)
+                self.C = self.memory[self.HL]
             elif opcode == 0x4f: # LD C, A
                 self.C = self.A
-
+            elif opcode == 0x50: # LD D, B
+                self.D = self.B
+            elif opcode == 0x51: # LD D, C
+                self.D = selc.C
+            elif opcode == 0x52: # LD D, D
+                pass
+            elif opcode == 0x53: # LD D, E
+                self.D = self.E
+            elif opcode == 0x54: # LD D, H
+                self.D = self.H
+            elif opcode == 0x55: # LD D, L
+                self.D = self.L
+            elif opcode == 0x56: # LD D, (HL)
+                self.D = self.memory[self.HL]
             elif opcode == 0x57: # LD D, A
                 self.D = self.A
-
+            elif opcode == 0x58: # LD E, B
+                self.E = self.B
+            elif opcode == 0x59: # LD E, C
+                self.E = self.C
+            elif opcode == 0x5a: # LD E, D
+                self.E = self.D
+            elif opcode == 0x5b: # LD E, E
+                pass
+            elif opcode == 0x5c: # LD E, H
+                self.E = self.H
+            elif opcode == 0x5d: # LD E, L
+                self.E = self.L
+            elif opcode == 0x5e: # LD E, (HL)
+                self.E = self.memory[self.HL]
+            elif opcode == 0x5f: # LD E, A
+                self.E = self.A
+            elif opcode == 0x60: # LD H, B
+                self.H = self.B
+            elif opcode == 0x61: # LD H, C
+                self.H = self.C
+            elif opcode == 0x62: # LD H, D
+                self.H = self.D
             elif opcode == 0x63: # LD H, E
                 self.H = self.E
-
+            elif opcode == 0x64: # LD H, H
+                pass
+            elif opcode == 0x65: # LD H, L
+                self.H = self.L
             elif opcode == 0x66: # LD H, (HL)
                 self.H = self.memory[self.HL]
-
             elif opcode == 0x67: # LD H, A
                 self.H = self.A
-
+            elif opcode == 0x68: # LD L, B
+                self.L = self.B
+            elif opcode == 0x69: # LD L, C
+                self.L = self.C
+            elif opcode == 0x6a: # LD L, D
+                self.L = self.D
+            elif opcode == 0x6b: # LD L, E
+                self.L = self.E
+            elif opcode == 0x6c: # LD L, H
+                self.L = self.H
+            elif opcode == 0x6d: # LD L, L
+                pass
             elif opcode == 0x6e: # LD L, (HL)
                 self.L = self.memory[self.HL]
+            elif opcode == 0x6f: # LD L, A
+                self.L = self.A
 
             elif opcode == 0xc1: # POP BC
                 self.BC = self.pop()
@@ -752,9 +828,6 @@ class CPU(object):
                 Z = (self.A == 0)
                 # TODO: Set other flags
 
-            elif opcode == 0x45: # LD B, L
-                self.B = self.L
-
             elif opcode == 0x36: # LD (HL), d8
                 self.memory[self.HL] = arg
 
@@ -829,6 +902,11 @@ class CPU(object):
             elif opcode == 0xee: # XOR d8
                 self.A ^= arg
                 Z = self.A == 0
+
+            elif opcode == 0x1c: # INC E
+                H = self.E == 0xf # TODO: fix
+                self.E = (self.E + 1) % 0xff
+                Z = self.E == 0
 
             else:
                 raise self.unknown_opcode(raw)
