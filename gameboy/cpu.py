@@ -47,18 +47,18 @@ class CPU(object):
         self.MHz = 4.194304
 
         # 8-bit registers
-        self.A = 0
-        self.B = 0
-        self.C = 0
-        self.D = 0
-        self.E = 0
-        self.F = 0 # flags register
-        self.H = 0
-        self.L = 0
+        self._A = 0
+        self._B = 0
+        self._C = 0
+        self._D = 0
+        self._E = 0
+        self._F = 0 # flags register
+        self._H = 0
+        self._L = 0
 
         # 16-bit registers
-        self.PC = 0
-        self.SP = 0
+        self._PC = 0
+        self._SP = 0
 
         # Interrupts Maske Enable flag
         # TODO: Implement all flags and the rest of the interrupt system
@@ -69,13 +69,95 @@ class CPU(object):
         self.total_cycles = 0
         self.start = time.clock()
 
+        self.screen_cycles = int((self.MHz*1e6 / self.memory.display.fps) /
+                self.memory.display.scanlines)
+
+    @property
+    def A(self):
+        return self._A
+
+    @A.setter
+    def A(self, value):
+        self._A = value % 0x100
+
+    @property
+    def B(self):
+        return self._B
+
+    @B.setter
+    def B(self, value):
+        self._B = value % 0x100
+
+    @property
+    def C(self):
+        return self._C
+
+    @C.setter
+    def C(self, value):
+        self._C = value % 0x100
+
+    @property
+    def D(self):
+        return self._D
+
+    @D.setter
+    def D(self, value):
+        self._D = value % 0x100
+
+    @property
+    def E(self):
+        return self._E
+
+    @E.setter
+    def E(self, value):
+        self._E = value % 0x100
+
+    @property
+    def F(self):
+        return self._F
+
+    @F.setter
+    def F(self, value):
+        self._F = value % 0x100
+
+    @property
+    def L(self):
+        return self._L
+
+    @L.setter
+    def L(self, value):
+        self._L = value % 0x100
+
+    @property
+    def H(self):
+        return self._H
+
+    @H.setter
+    def H(self, value):
+        self._H = value % 0x100
+
+    @property
+    def SP(self):
+        return self._SP
+
+    @SP.setter
+    def SP(self, value):
+        self._SP = value % 0x10000
+
+    @property
+    def PC(self):
+        return self._PC
+
+    @PC.setter
+    def PC(self, value):
+        self._PC = value % 0x10000
 
     def push(self, nn):
         self.memory.set16(self.SP, nn)
-        self.SP = (self.SP - 2) % 0x10000
+        self.SP -= 2
 
     def pop(self):
-        self.SP = (self.SP + 2) % 0x10000
+        self.SP += 2
         return self.memory.get16(self.SP)
 
     def call(self, nn):
@@ -86,7 +168,7 @@ class CPU(object):
         self.PC = self.pop()
 
     def jmp(self, nn):
-        self.PC = nn % 0x10000
+        self.PC = nn
 
     def rst(self, nn):
         self.call(self.memory.get16(nn))
@@ -156,15 +238,11 @@ class CPU(object):
         try:
             opcode = self.fetch()
             name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
-
             self.execute(opcode, length, cycles, flags, raw, arg)
 
             # Let the display do its thing, timed *very* roughly
-            ratio = int((self.MHz*1e6 / self.memory.display.fps) /
-                    self.memory.display.scanlines)
-
-            if self.cycles >= ratio:
-                self.cycles %= ratio
+            if self.cycles >= self.screen_cycles:
+                self.cycles %= self.screen_cycles
                 self.memory.display.step()
 
             if boot_rom and not self.memory.boot_rom_active:
@@ -237,7 +315,7 @@ class CPU(object):
         if value:
             self.F |= 1<<7
         else:
-            self.F &= ~(1<<7)
+            self.F &= 0b01111111
 
     @property
     def N_flag(self):
@@ -249,7 +327,7 @@ class CPU(object):
         if value:
             self.F |= 1<<6
         else:
-            self.F &= ~(1<<6)
+            self.F &= 0b10111111
 
     @property
     def H_flag(self):
@@ -261,7 +339,7 @@ class CPU(object):
         if value:
             self.F |= 1<<5
         else:
-            self.F &= ~(1<<5)
+            self.F &= 0b11011111
 
     @property
     def C_flag(self):
@@ -273,7 +351,7 @@ class CPU(object):
         if value:
             self.F |= 1<<4
         else:
-            self.F &= ~(1<<4)
+            self.F &= 0b11101111
 
     def error_message(self, prefix, raw=None, arg=None):
         if raw is None:
@@ -350,41 +428,43 @@ class CPU(object):
             elif opcode == 0x03: # INC BC
                 self.BC += 1
             elif opcode == 0x04: # INC B
-                self.B = (self.B + 1) % 0x100
-                Z = (self.B == 0)
+                self.B += 1
+                Z = self.B == 0
                 # TODO: Set half carry
             elif opcode == 0x05: # DEC B
                 H = (self.B % 0xf) == 0b0000 # TODO: Ok?
-                self.B = (self.B - 1) % 0x100
-                Z = (self.B == 0)
+                self.B -= 1
+                Z = self.B == 0
                 # TODO: Implement half-carry flag
             elif opcode == 0x06: # LD B, d8
                 self.B = arg
             elif opcode == 0x07: # RLCA
                 self.C_flag = (self.A & (1<<7)) >> 7
-                self.A = (self.A << 1) % 0x100
+                self.A <<= 1
             elif opcode == 0x08: # LD (a16), SP
                 self.memory.set16(arg, self.SP)
             elif opcode == 0x09: # ADD HL, BC
-                self.HL += self.BC
-                # TOTO: Set H, C
+                n = self.HL + self.BC
+                C = n > 0xffff
+                self.HL = n
+                # TOTO: Set H
             elif opcode == 0x0a: # LD A, (BC)
                 self.A = self.memory[self.BC]
             elif opcode == 0x0b: # DEC BC
-                self.BC = (self.BC - 1) % 0x10000
+                self.BC -= 1
             elif opcode == 0x0c: # INC C
-                self.C = (self.C + 1) % 0x100
-                Z = (self.C == 0)
+                self.C += 1
+                Z = self.C == 0
                 # TODO: Set half carry
             elif opcode == 0x0d: # DEC C
-                self.C = (self.C - 1) % 0x100
-                Z = (self.C == 0)
+                self.C -= 1
+                Z = self.C == 0
                 # TODO: set H flag
             elif opcode == 0x0e: # LD C, d8
                 self.C = arg
             elif opcode == 0x0f: # RRCA
                 C = (self.A & 0x1)
-                self.A = (self.A >> 1) & 0xff
+                self.A >>= 1
                 self.A |= (self.C_flag << 7)
                 Z = (self.A == 0)
             elif opcode == 0x10: # STOP
@@ -396,22 +476,22 @@ class CPU(object):
             elif opcode == 0x12: # LD (DE), A
                 self.memory[self.DE] = self.A
             elif opcode == 0x13: # INC DE
-                self.DE = (self.DE + 1) % 0x10000
+                self.DE += 1
             elif opcode == 0x14:  # INC D
                 H = self.D == 0xf # TODO: Fix
-                self.D = (self.D + 1) % 0x100
+                self.D += 1
                 Z = self.D == 0
             elif opcode == 0x15: # DEC D
-                self.D = (self.D - 1) % 0x100
-                Z = (self.D == 0)
+                self.D -= 1
+                Z = self.D == 0
                 # TODO: set H flag
             elif opcode == 0x16: # LD D, d8
                 self.D = arg
             elif opcode == 0x17: # RLA
                 C = (self.A & (1<<7)) >> 7
-                self.A = (self.A << 1) & 0xff
+                self.A <<= 1
                 self.A |= self.C_flag
-                Z = (self.A == 0)
+                Z = self.A == 0
             elif opcode == 0x18: # JR r8
                 self.jmp(self.PC + arg)
             elif opcode == 0x19: # ADD HL, DE
@@ -420,8 +500,8 @@ class CPU(object):
                 self.A = self.memory[self.DE]
             elif opcode == 0x1b: # RR E
                 C = (self.E & 0x1)
-                self.E = (self.E >> 1) & 0xff
-                self.E |= (self.C_flag << 7)
+                self.E >>= 1
+                self.E |= self.C_flag << 7
                 Z = (self.E == 0)
             elif opcode == 0x1c: # INC E
                 H = self.E == 0xf # TODO: fix
@@ -435,9 +515,9 @@ class CPU(object):
                 self.E = arg
             elif opcode == 0x1f: # RRA
                 C = (self.A & 0x1)
-                self.A = (self.A >> 1) & 0xff
+                self.A >>= 1
                 self.A |= (self.C_flag << 7)
-                Z = (self.A == 0)
+                Z = self.A == 0
             elif opcode == 0x20: # JR NZ, r8
                 if not self.Z_flag:
                     cycles = cycles[0]
@@ -448,15 +528,15 @@ class CPU(object):
                 self.HL = arg
             elif opcode == 0x22: # LD (HL+), A
                 self.memory[self.HL] = self.A
-                self.HL = (self.HL + 1) % 0x10000
+                self.HL += 1
             elif opcode == 0x23: # INC HL
-                self.HL = (self.HL + 1) % 0x10000
+                self.HL += 1
             elif opcode == 0x24: # INC H
-                self.H = (self.H + 1) % 0x100
-                Z = (self.H == 0)
+                self.H += 1
+                Z = self.H == 0
                 # TODO: Set half carry
             elif opcode == 0x25: # DEC H
-                self.H = (self.H - 1) % 0x100
+                self.H -= 1
                 Z = self.H == 0
                 # TODO: Set H flag
             elif opcode == 0x26: # LD H, d8
@@ -473,19 +553,21 @@ class CPU(object):
                 else:
                     cycles = cycles[1]
             elif opcode == 0x29: # ADD HL, HL
-                self.HL = (self.HL + self.HL) % 0x10000
-                # TODO: Set H/C
+                n = self.HL + self.HL
+                C = n > 0xffff
+                self.HL = n
+                # TODO: Set H
             elif opcode == 0x2a: # LD A, (HL+)
                 self.A = self.memory[self.HL]
                 self.HL = inc16(self.HL)
             elif opcode == 0x2b: # DEC HL
                 self.HL -= 1
             elif opcode == 0x2c: # INC L
-                self.L = (self.L + 1) % 0x100
+                self.L += 1
                 Z = self.L == 0
                 # TODO: Set H
             elif opcode == 0x2d: # DEC L
-                self.L = (self.L - 1) % 0x100
+                self.L -= 1
                 Z = self.L == 0
                 # TODO: Set H
             elif opcode == 0x2e: # LD L, d8
