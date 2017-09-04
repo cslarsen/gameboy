@@ -727,6 +727,34 @@ class CPU(object):
                 self.A = (self.A - self.B) % 0xff
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
+            elif opcode == 0x91: # SUB C
+                self.A = (self.A - self.C) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x92: # SUB D
+                self.A = (self.A - self.D) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x93: # SUB E
+                self.A = (self.A - self.E) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x94: # SUB H
+                self.A = (self.A - self.H) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x95: # SUB L
+                self.A = (self.A - self.L) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x96: # SUB (HL)
+                self.A = (self.A - self.memory[self.HL]) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
+            elif opcode == 0x97: # SUB A
+                self.A = (self.A - self.A) % 0xff
+                Z = (self.A == 0)
+                # TODO: set half carry and carry flags
             elif opcode == 0x98: # SBC A, B
                 n = self.B + self.C_flag
                 self.A = (self.A - n) % 0xff

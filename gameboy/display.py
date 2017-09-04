@@ -214,6 +214,9 @@ class Display(object):
 
         if self.background_display:
             self.render_background_scanline(self.LY)
+        else:
+            # Set to blank
+            self.window.line(0x0, 0, self.LY, self.width, self.LY)
 
         if self.ly_rollover():
             self.read_palette()
