@@ -10,6 +10,7 @@ TODO: Implement bytes and registers as rollover unsigned ints.
 import time
 
 from util import (
+    check_boot,
     format_hex,
     log,
     u16_to_u8,
@@ -150,6 +151,7 @@ class CPU(object):
 
     def step(self):
         start = self.PC
+        boot_rom = self.memory.boot_rom_active
 
         try:
             opcode = self.fetch()
@@ -164,6 +166,10 @@ class CPU(object):
             if self.cycles >= ratio:
                 self.cycles %= ratio
                 self.memory.display.step()
+
+            if boot_rom and not self.memory.boot_rom_active:
+                if not check_boot(self):
+                    raise EmulatorError("Boot state not OK")
         except Exception:
             log("** Exception at $%0.4x" % start)
             raise

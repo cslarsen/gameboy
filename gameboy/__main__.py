@@ -9,7 +9,7 @@ from debugger import Debugger
 from disassembler import disassemble
 from errors import EmulatorError
 from gameboy import Gameboy
-from util import load_binary, log
+from util import load_binary, log, set_boot
 
 def find_default_boot_rom():
     return os.path.join(os.path.dirname(__file__), "roms", "boot")
@@ -87,49 +87,8 @@ def main():
                 zoom=opt.zoom)
 
         if opt.skip_boot:
-            # Set up registers and so on in the state it would be in after
-            # completing the Nintendo boot code.
-
-            gameboy.cpu.AF = 0x01B0
-            gameboy.cpu.BC = 0x0013
-            gameboy.cpu.DE = 0x00d8
-            gameboy.cpu.HL = 0x014f
-            gameboy.cpu.PC = 0x0100
-            gameboy.cpu.SP = 0xfffe
-
+            set_boot(gameboy)
             gameboy.memory.boot_rom_active = False
-
-            gameboy.memory[0xff05] = 0x00 # TIMA
-            gameboy.memory[0xff06] = 0x00 # TMA
-            gameboy.memory[0xff07] = 0x00 # TAC
-            gameboy.memory[0xff10] = 0x80 # NR10
-            gameboy.memory[0xff11] = 0xbf # NR11
-            gameboy.memory[0xff12] = 0xf4 # NR12
-            gameboy.memory[0xff14] = 0xbf # NR14
-            gameboy.memory[0xff16] = 0x3f # NR21
-            gameboy.memory[0xff17] = 0x00 # NR22
-            gameboy.memory[0xff19] = 0xbf # NR24
-            gameboy.memory[0xff1a] = 0x7f # NR30
-            gameboy.memory[0xff1b] = 0xff # NR31
-            gameboy.memory[0xff1c] = 0x9f # NR32
-            gameboy.memory[0xff1e] = 0xbf # NR33
-            gameboy.memory[0xff20] = 0xff # NR41
-            gameboy.memory[0xff21] = 0x00 # NR42
-            gameboy.memory[0xff22] = 0x00 # NR43
-            gameboy.memory[0xff23] = 0xbf # NR30
-            gameboy.memory[0xff24] = 0x77 # NR50
-            gameboy.memory[0xff25] = 0xf3 # NR51
-            gameboy.memory[0xff26] = 0xf1 # GB
-            gameboy.memory[0xff40] = 0x91 # LCDC
-            gameboy.memory[0xff42] = 0x00 # SCY
-            gameboy.memory[0xff43] = 0x00 # SCX
-            gameboy.memory[0xff45] = 0x00 # LYC
-            gameboy.memory[0xff47] = 0xfc # BGP
-            gameboy.memory[0xff48] = 0xff # OBP0
-            gameboy.memory[0xff49] = 0xff # OBP1
-            gameboy.memory[0xff4a] = 0x00 # WY
-            gameboy.memory[0xff4b] = 0x00 # WX
-            gameboy.memory[0xffff] = 0x00 # IE
 
         if opt.debug:
             Debugger(gameboy).run()
