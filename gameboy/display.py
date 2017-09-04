@@ -123,11 +123,8 @@ class Display(object):
 
     def ly_rollover(self):
         """Increments LY and returns whether it rolled over."""
-        self.LY += 1
-        if self.LY == 0x100:
-            self.LY = 0
-            return True
-        return False
+        self.LY = (self.LY + 1) % 0x100
+        return self.LY == 0
 
     def show_viewport(self):
         """Marks viewable area"""
@@ -216,7 +213,7 @@ class Display(object):
             self.render_background_scanline(self.LY)
         else:
             # Set to blank
-            self.window.line(0x0, 0, self.LY, self.width, self.LY)
+            self.window.line(0x0, 0, self.LY, self.window.width, self.LY)
 
         if self.ly_rollover():
             self.read_palette()
@@ -233,8 +230,8 @@ class Display(object):
     @LCDCONT.setter
     def LCDCONT(self, value):
         self._LCDCONT = value % 0xff
-        log("LCDCONT display=%s background=%s" % ("on" if self.screen_on
-            else "off", "on" if self.background_display else "off"))
+        #log("LCDCONT display=%s background=%s" % ("on" if self.screen_on
+            #else "off", "on" if self.background_display else "off"))
 
     @property
     def screen_on(self):
