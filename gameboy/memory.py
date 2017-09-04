@@ -113,7 +113,11 @@ class MemoryController(object):
         if address <= 0xffff:
             return self.internal_work_ram, 0xc000
 
-        raise MemoryError("Invalid memory address 0x%x" % address)
+        # Don't raise exception. Instead figure out how a real Gameboy would
+        # handle an invalid memory location.
+        return None, None
+
+        #raise MemoryError("Invalid memory address 0x%x" % address)
 
     def __getitem__(self, address):
         """Reads one byte from memory."""
@@ -130,6 +134,11 @@ class MemoryController(object):
             return self.display.BGPAL
 
         memory, offset = self._memory_map(address)
+
+        if memory is None and offset is None:
+            # Bad access
+            return 0
+
         if address < offset:
             raise MemoryError("%r: Adress 0x%0.4x less than offset 0x%0.4x" % (
                 memory.name, address, offset))
@@ -179,6 +188,11 @@ class MemoryController(object):
                 return
 
         memory, offset = self._memory_map(address)
+
+        if memory is None and offset is None:
+            # Bad memory access
+            return
+
         memory[address - offset] = value
 
         # Mirroring of addresses
