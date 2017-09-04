@@ -177,14 +177,13 @@ class MemoryController(object):
             try:
                 # Write to ROM is a request for bank-switching
                 #log("Switching home to ROM bank %d" % value)
-                value = (value % 32)
+                value = (value % self.cartridge.rom_banks)
                 if value == 0:
                     value = 1
                 self.home = self.cartridge.rom_bank[value]
                 return
             except IndexError:
                 log("Warning: Invalid ROM bank $%0.2x, ignoring" % value)
-                # TODO: Should I reset to 0/1 or just straight out ignore?
                 return
 
         memory, offset = self._memory_map(address)
