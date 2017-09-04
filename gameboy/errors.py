@@ -6,3 +6,6 @@ class MemoryError(EmulatorError):
 
 class OpcodeError(EmulatorError):
     pass
+
+class InvalidOpcodeError(OpcodeError):
+    pass

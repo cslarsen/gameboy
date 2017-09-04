@@ -159,13 +159,15 @@ class MemoryController(object):
             self.display.BGPAL = value
             return
         if address == 0xff50:
-            log("DMG boot ROM turned off!")
-            self.boot_rom_active = False
+            if self.boot_rom_active:
+                log("DMG boot ROM turned off!")
+                self.boot_rom_active = False
+            # Do not return here
 
         if address < 0x8000:
             try:
                 # Write to ROM is a request for bank-switching
-                log("Switching home to ROM bank %d" % value)
+                #log("Switching home to ROM bank %d" % value)
                 self.home = self.cartridge.rom_bank[value]
                 return
             except IndexError:
