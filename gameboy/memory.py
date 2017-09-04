@@ -63,7 +63,7 @@ class Memory(object):
         if self.readonly:
             raise MemoryError("%r: Attempt to write to readonly memory at $%0.4x"
                     % (self.name, index))
-        self.data[index] = value
+        self.data[index] = value % 0x100
 
 class MemoryController(object):
     def __init__(self, boot_rom, display, cartridge):
@@ -168,10 +168,14 @@ class MemoryController(object):
             try:
                 # Write to ROM is a request for bank-switching
                 #log("Switching home to ROM bank %d" % value)
+                value = (value % 32)
+                if value == 0:
+                    value = 1
                 self.home = self.cartridge.rom_bank[value]
                 return
             except IndexError:
                 log("Warning: Invalid ROM bank $%0.2x, ignoring" % value)
+                # TODO: Should I reset to 0/1 or just straight out ignore?
                 return
 
         memory, offset = self._memory_map(address)
@@ -179,9 +183,9 @@ class MemoryController(object):
 
         # Mirroring of addresses
         if 0xc000 <= address <= 0xde00:
-            memory[address + 0x1000 - offset] = value
+            memory[address + 0x1000 - offset] = value % 0x100
         elif 0xe000 <= address <= 0xfe00:
-            memory[address - 0x1000 - offset] = value
+            memory[address - 0x1000 - offset] = value % 0x100
 
     def get16(self, address):
         return u8_to_u16(self[address+1], self[address])
