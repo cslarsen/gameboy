@@ -11,6 +11,7 @@ import time
 
 from util import (
     format_hex,
+    log,
     u16_to_u8,
     u8_to_signed,
     u8_to_u16,
@@ -148,18 +149,24 @@ class CPU(object):
             self.step()
 
     def step(self):
-        opcode = self.fetch()
-        name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
+        start = self.PC
 
-        self.execute(opcode, length, cycles, flags, raw, arg)
+        try:
+            opcode = self.fetch()
+            name, opcode, length, cycles, flags, arg, raw = self.decode(opcode)
 
-        # Let the display do its thing, timed *very* roughly
-        ratio = int((self.MHz*1e6 / self.memory.display.fps) /
-                self.memory.display.scanlines)
+            self.execute(opcode, length, cycles, flags, raw, arg)
 
-        if self.cycles >= ratio:
-            self.cycles %= ratio
-            self.memory.display.step()
+            # Let the display do its thing, timed *very* roughly
+            ratio = int((self.MHz*1e6 / self.memory.display.fps) /
+                    self.memory.display.scanlines)
+
+            if self.cycles >= ratio:
+                self.cycles %= ratio
+                self.memory.display.step()
+        except Exception:
+            log("** Exception at $%0.4x" % start)
+            raise
 
     @property
     def emulated_MHz(self):
