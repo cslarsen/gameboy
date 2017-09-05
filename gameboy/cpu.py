@@ -12,8 +12,10 @@ import time
 from util import (
     check_boot,
     format_hex,
+    get16be,
     log,
     make_array,
+    set16be,
     u16_to_u8,
     u8_to_signed,
     u8_to_u16,
@@ -47,19 +49,15 @@ class CPU(object):
         self.memory = memory_controller
         self.MHz = 4.194304
 
-        # 8-bit registers. We implement this using an array with the following
-        # layout: AFBCDEHL, so register A is at index 0, while the BC combo is
-        # 16-bit with indices 2,3. This corresponds well with the hardware
-        # layout:
+        # 8-bit registers, implemented in an array, because it makes sense.
+        # Layout:
+        #   PC
+        #   SP
         #   AF
         #   BC
         #   DE
         #   HL
-        self.register = make_array([0,0,0,0,0,0,0,0])
-
-        # 16-bit registers
-        self._PC = 0
-        self._SP = 0
+        self.registers = make_array([0]*12)
 
         # Interrupts Maske Enable flag
         # TODO: Implement all flags and the rest of the interrupt system
@@ -75,115 +73,115 @@ class CPU(object):
 
     @property
     def A(self):
-        return self.register[0]
+        return self.registers[4]
 
     @A.setter
     def A(self, n):
-        self.register[0] = n % 0x100
+        self.registers[4] = n % 0x100
 
     @property
     def F(self):
-        return self.register[1]
+        return self.registers[5]
 
     @F.setter
     def F(self, n):
-        self.register[1] = n % 0x100
+        self.registers[5] = n % 0x100
 
     @property
     def AF(self):
-        return u8_to_u16(self.register[0], self.register[1])
+        return get16be(self.registers, 4)
 
     @AF.setter
     def AF(self, nn):
-        self.register[0], self.register[1] = u16_to_u8(nn % 0x10000)
+        set16be(self.registers, 4, nn)
 
     @property
     def B(self):
-        return self.register[2]
+        return self.registers[6]
 
     @B.setter
     def B(self, n):
-        self.register[2] = n % 0x100
+        self.registers[6] = n % 0x100
 
     @property
     def C(self):
-        return self.register[3]
+        return self.registers[7]
 
     @C.setter
     def C(self, n):
-        self.register[3] = n % 0x100
+        self.registers[7] = n % 0x100
 
     @property
     def BC(self):
-        return u8_to_u16(self.register[2], self.register[3])
+        return get16be(self.registers, 6)
 
     @BC.setter
     def BC(self, nn):
-        self.register[2], self.register[3] = u16_to_u8(nn % 0x10000)
+        set16be(self.registers, 6, nn)
 
     @property
     def D(self):
-        return self.register[4]
+        return self.registers[8]
 
     @D.setter
     def D(self, n):
-        self.register[4] = n % 0x100
+        self.registers[8] = n % 0x100
 
     @property
     def E(self):
-        return self.register[5]
+        return self.registers[9]
 
     @E.setter
     def E(self, n):
-        self.register[5] = n % 0x100
+        self.registers[9] = n % 0x100
 
     @property
     def DE(self):
-        return u8_to_u16(self.register[4], self.register[5])
+        return get16be(self.registers, 8)
 
     @DE.setter
     def DE(self, nn):
-        self.register[4], self.register[5] = u16_to_u8(nn % 0x10000)
+        set16be(self.registers, 8, nn)
 
     @property
     def H(self):
-        return self.register[6]
+        return self.registers[10]
 
     @H.setter
     def H(self, n):
-        self.register[6] = n % 0x100
+        self.registers[10] = n % 0x100
 
     @property
     def L(self):
-        return self.register[7]
+        return self.registers[11]
 
     @L.setter
     def L(self, n):
-        self.register[7] = n % 0x100
+        self.registers[11] = n % 0x100
 
     @property
     def HL(self):
-        return u8_to_u16(self.register[6], self.register[7])
+        return get16be(self.registers, 10)
 
     @HL.setter
     def HL(self, nn):
-        self.register[6], self.register[7] = u16_to_u8(nn % 0x10000)
-
-    @property
-    def SP(self):
-        return self._SP
-
-    @SP.setter
-    def SP(self, nn):
-        self._SP = nn % 0x10000
+        set16be(self.registers, 10, nn)
 
     @property
     def PC(self):
-        return self._PC
+        return get16be(self.registers, 0)
 
     @PC.setter
     def PC(self, nn):
-        self._PC = nn % 0x10000
+        set16be(self.registers, 0, nn)
+
+    @property
+    def SP(self):
+        return get16be(self.registers, 2)
+
+    @SP.setter
+    def SP(self, nn):
+        set16be(self.registers, 2, nn)
 
     def push(self, nn):
         self.memory.set16(self.SP, nn)

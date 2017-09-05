@@ -9,6 +9,16 @@ def make_array(data=None):
     else:
         return array.array("B", data)
 
+def get16be(array, address):
+    """Get two 8-bit values from array in big-endian format."""
+    return (array[address] << 8) | array[address+1]
+
+def set16be(array, address, value):
+    """Set two 8-bit values in array in big-endian format."""
+    value = value % 0x10000
+    array[address] = (value & 0xff00) >> 8
+    array[address+1] = value & 0xff
+
 def load_binary(filename):
     """Reads a binary file into an unsigned 8-bit array."""
     with open(filename, "rb") as f:
