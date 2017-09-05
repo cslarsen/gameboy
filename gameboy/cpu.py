@@ -505,10 +505,10 @@ class CPU(object):
                 Z = (self.E == 0)
             elif opcode == 0x1c: # INC E
                 H = self.E == 0xf # TODO: fix
-                self.E = (self.E + 1) % 0x100
+                self.E += 1
                 Z = self.E == 0
             elif opcode == 0x1d: # DEC E
-                self.E = (self.E - 1) % 0x100
+                self.E -= 1
                 Z = (self.E == 0)
                 # TODO: set H flag
             elif opcode == 0x1e: # LD E, d8
@@ -584,9 +584,9 @@ class CPU(object):
                 self.SP = arg
             elif opcode == 0x32: # LD (HL-), A
                 self.memory[self.HL] = self.A
-                self.HL = (self.HL - 1) % 0x10000
+                self.HL -= 1
             elif opcode == 0x33: # INC SP
-                self.SP = (self.SP + 1) % 0x10000
+                self.SP += 1
                 Z = (self.SP == 0)
                 # TODO: Set H flag
             elif opcode == 0x34: # INC (HL)
@@ -616,13 +616,13 @@ class CPU(object):
                 self.A = self.memory[self.HL]
                 self.HL -= 1
             elif opcode == 0x3b: # DEC SP
-                self.SP = (self.SP - 1) % 0x10000
+                self.SP -= 1
             elif opcode == 0x3c: # INC A
                 H = (self.A & 0xf) == 0b1111 # TODO: Correct?
-                self.A = (self.A + 1) % 0x100
+                self.A += 1
                 Z = (self.A == 0)
             elif opcode == 0x3d: # DEC A
-                self.A = (self.A - 1) % 0x100
+                self.A -= 1
                 Z = (self.A == 0)
                 # TODO: set H flag
             elif opcode == 0x3e: # LD A, d8
@@ -759,75 +759,75 @@ class CPU(object):
             elif opcode == 0x7f: # LD A, A
                 pass # no op
             elif opcode == 0x80: # ADD A, B
-                self.A = (self.A + self.B) % 0x100
+                self.A += self.B
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x81: # ADD A, C
-                self.A = (self.A + self.C) % 0x100
+                self.A += self.C
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x82: # ADD A, D
-                self.A = (self.A + self.D) % 0x100
+                self.A += self.D
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x83: # ADD A, E
-                self.A = (self.A + self.E) % 0x100
+                self.A += self.E
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x84: # ADD A, H
-                self.A = (self.A + self.H) % 0x100
+                self.A += self.H
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x85: # ADD A, L
-                self.A = (self.A + self.B) % 0x100
+                self.A += self.L
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0x86: # ADD A, (HL)
-                self.A = (self.A + self.memory[self.HL]) % 0x100
+                self.A += self.memory[self.HL]
                 Z = (self.A == 0)
                 # TODO: Set other flags
             elif opcode == 0x87: # ADD A, A
-                self.A = (self.A + self.A) % 0x100
+                self.A += self.A
                 Z = (self.A == 0)
                 # TODO: Set other flags
             elif opcode == 0x88: # ADC A, B
                 n = self.B + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x89: # ADC A, C
                 n = self.C + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8a: # ADC A, D
                 n = self.D + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8b: # ADC A, E
                 n = self.D + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8c: # ADC A, H
                 n = self.H + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8d: # ADC A, L
                 n = self.H + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8e: # ADC A, (HL)
                 n = self.memory[self.HL] + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x8f: # ADC A, A
                 n = self.memory[self.HL] + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = (self.A == 0)
                 # TODO: Carry stuff
             elif opcode == 0x90: # SUB B
@@ -835,71 +835,72 @@ class CPU(object):
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x91: # SUB C
-                self.A = (self.A - self.C) % 0x100
+                self.A -= self.C
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x92: # SUB D
-                self.A = (self.A - self.D) % 0x100
+                self.A -= self.D
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x93: # SUB E
-                self.A = (self.A - self.E) % 0x100
+                self.A -= self.E
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x94: # SUB H
-                self.A = (self.A - self.H) % 0x100
+                self.A -= self.H
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x95: # SUB L
-                self.A = (self.A - self.L) % 0x100
+                self.A -= self.L
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x96: # SUB (HL)
-                self.A = (self.A - self.memory[self.HL]) % 0x100
+                self.A -= self.memory[self.HL]
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x97: # SUB A
+                self.A -= self.A
                 self.A = (self.A - self.A) % 0x100
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0x98: # SBC A, B
                 n = self.B + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x99: # SBC A, C
                 n = self.C + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9a: # SBC A, D
                 n = self.D + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9b: # SBC A, E
                 n = self.E + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9c: # SBC A, H
                 n = self.H + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9d: # SBC A, L
                 n = self.L + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9e: # SBC A, (HL)
                 n = self.memory[self.HL] + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0x9f: # SBC A, A
                 n = self.A + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0xa0: # AND B
@@ -977,42 +978,42 @@ class CPU(object):
             elif opcode == 0xb8: # CP B
                 result = (self.A - self.B) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xb9: # CP C
                 result = (self.A - self.C) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xba: # CP D
                 result = (self.A - self.D) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xbb: # CP E
                 result = (self.A - self.E) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xbc: # CP H
                 result = (self.A - self.H) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xbd: # CP L
                 result = (self.A - self.L) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xbe: # CP (HL)
                 result = (self.A - self.memory[self.HL]) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xbf: # CP A
                 result = (self.A - self.A) % 0x100
                 Z = (result == 0)
-                C = (self.A < arg)
+                C = (self.A < result)
                 # TODO: set H
             elif opcode == 0xc0: # RET NZ
                 if not self.Z_flag:
@@ -1039,7 +1040,7 @@ class CPU(object):
             elif opcode == 0xc5: # PUSH BC
                 self.push(self.BC)
             elif opcode == 0xc6: # ADD A, d8
-                self.A = (self.A + arg) % 0x100
+                self.A += arg
                 Z = self.A == 0
                 # TODO: Set H/C
             elif opcode == 0xc7: # RST 00H
@@ -1071,7 +1072,7 @@ class CPU(object):
                 self.call(arg)
             elif opcode == 0xce: # ADC A, d8
                 n = arg + self.C_flag
-                self.A = (self.A + n) % 0x100
+                self.A += n
                 Z = self.A == 0
                 # TODO: Set C, H
             elif opcode == 0xcf: # RST 08H
@@ -1102,7 +1103,7 @@ class CPU(object):
             elif opcode == 0xd5: # PUSH DE
                 self.push(self.DE)
             elif opcode == 0xd6: # SUB d8
-                self.A = (self.A - arg) % 0x100
+                self.A -= arg
                 Z = (self.A == 0)
                 # TODO: set half carry and carry flags
             elif opcode == 0xd7: # RST 10H
@@ -1136,7 +1137,7 @@ class CPU(object):
                         (opcode, self.PC - length))
             elif opcode == 0xde: # SBC A, d8
                 n = arg + self.C_flag
-                self.A = (self.A - n) % 0x100
+                self.A -= n
                 Z = self.A == 0
                 # TODO H/C flags
             elif opcode == 0xdf: # RST 18H
@@ -1185,10 +1186,11 @@ class CPU(object):
                 self.A = self.memory[arg]
             elif opcode == 0xf1: # POP AF
                 self.AF = self.pop()
-                Z = self.AF == 0
-                N = False
-                H = False
-                C = False
+                # According to official manual, no flags should be set here
+                #Z = self.AF == 0
+                #N = False
+                #H = False
+                #C = False
             elif opcode == 0xf2: # LD A, (C)
                 self.A = self.memory[self.C]
             elif opcode == 0xf3: # DI
