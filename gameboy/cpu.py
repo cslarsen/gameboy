@@ -13,6 +13,7 @@ from util import (
     check_boot,
     format_hex,
     log,
+    make_array,
     u16_to_u8,
     u8_to_signed,
     u8_to_u16,
@@ -46,15 +47,15 @@ class CPU(object):
         self.memory = memory_controller
         self.MHz = 4.194304
 
-        # 8-bit registers
-        self._A = 0
-        self._B = 0
-        self._C = 0
-        self._D = 0
-        self._E = 0
-        self._F = 0 # flags register
-        self._H = 0
-        self._L = 0
+        # 8-bit registers. We implement this using an array with the following
+        # layout: AFBCDEHL, so register A is at index 0, while the BC combo is
+        # 16-bit with indices 2,3. This corresponds well with the hardware
+        # layout:
+        #   AF
+        #   BC
+        #   DE
+        #   HL
+        self.register = make_array([0,0,0,0,0,0,0,0])
 
         # 16-bit registers
         self._PC = 0
@@ -74,83 +75,115 @@ class CPU(object):
 
     @property
     def A(self):
-        return self._A
+        return self.register[0]
 
     @A.setter
-    def A(self, value):
-        self._A = value % 0x100
-
-    @property
-    def B(self):
-        return self._B
-
-    @B.setter
-    def B(self, value):
-        self._B = value % 0x100
-
-    @property
-    def C(self):
-        return self._C
-
-    @C.setter
-    def C(self, value):
-        self._C = value % 0x100
-
-    @property
-    def D(self):
-        return self._D
-
-    @D.setter
-    def D(self, value):
-        self._D = value % 0x100
-
-    @property
-    def E(self):
-        return self._E
-
-    @E.setter
-    def E(self, value):
-        self._E = value % 0x100
+    def A(self, n):
+        self.register[0] = n % 0x100
 
     @property
     def F(self):
-        return self._F
+        return self.register[1]
 
     @F.setter
-    def F(self, value):
-        self._F = value % 0x100
+    def F(self, n):
+        self.register[1] = n % 0x100
 
     @property
-    def L(self):
-        return self._L
+    def AF(self):
+        return u8_to_u16(self.register[0], self.register[1])
 
-    @L.setter
-    def L(self, value):
-        self._L = value % 0x100
+    @AF.setter
+    def AF(self, nn):
+        self.register[0], self.register[1] = u16_to_u8(nn % 0x10000)
+
+    @property
+    def B(self):
+        return self.register[2]
+
+    @B.setter
+    def B(self, n):
+        self.register[2] = n % 0x100
+
+    @property
+    def C(self):
+        return self.register[3]
+
+    @C.setter
+    def C(self, n):
+        self.register[3] = n % 0x100
+
+    @property
+    def BC(self):
+        return u8_to_u16(self.register[2], self.register[3])
+
+    @BC.setter
+    def BC(self, nn):
+        self.register[2], self.register[3] = u16_to_u8(nn % 0x10000)
+
+    @property
+    def D(self):
+        return self.register[4]
+
+    @D.setter
+    def D(self, n):
+        self.register[4] = n % 0x100
+
+    @property
+    def E(self):
+        return self.register[5]
+
+    @E.setter
+    def E(self, n):
+        self.register[5] = n % 0x100
+
+    @property
+    def DE(self):
+        return u8_to_u16(self.register[4], self.register[5])
+
+    @DE.setter
+    def DE(self, nn):
+        self.register[4], self.register[5] = u16_to_u8(nn % 0x10000)
 
     @property
     def H(self):
-        return self._H
+        return self.register[6]
 
     @H.setter
-    def H(self, value):
-        self._H = value % 0x100
+    def H(self, n):
+        self.register[6] = n % 0x100
+
+    @property
+    def L(self):
+        return self.register[7]
+
+    @L.setter
+    def L(self, n):
+        self.register[7] = n % 0x100
+
+    @property
+    def HL(self):
+        return u8_to_u16(self.register[6], self.register[7])
+
+    @HL.setter
+    def HL(self, nn):
+        self.register[6], self.register[7] = u16_to_u8(nn % 0x10000)
 
     @property
     def SP(self):
         return self._SP
 
     @SP.setter
-    def SP(self, value):
-        self._SP = value % 0x10000
+    def SP(self, nn):
+        self._SP = nn % 0x10000
 
     @property
     def PC(self):
         return self._PC
 
     @PC.setter
-    def PC(self, value):
-        self._PC = value % 0x10000
+    def PC(self, nn):
+        self._PC = nn % 0x10000
 
     def push(self, nn):
         self.memory.set16(self.SP, nn)
@@ -272,38 +305,6 @@ class CPU(object):
                 "C" if self.C_flag else "-")
         print("flags=%s cycles=%d ~%.1f MHz" % (flags, self.total_cycles,
             self.emulated_MHz))
-
-    @property
-    def AF(self):
-        return u8_to_u16(self.A, self.F)
-
-    @AF.setter
-    def AF(self, value):
-        self.A, self.F = u16_to_u8(value % 0x10000)
-
-    @property
-    def HL(self):
-        return u8_to_u16(self.H, self.L)
-
-    @HL.setter
-    def HL(self, value):
-        self.H, self.L = u16_to_u8(value % 0x10000)
-
-    @property
-    def DE(self):
-        return u8_to_u16(self.D, self.E)
-
-    @DE.setter
-    def DE(self, value):
-        self.D, self.E = u16_to_u8(value % 0x10000)
-
-    @property
-    def BC(self):
-        return u8_to_u16(self.B, self.C)
-
-    @BC.setter
-    def BC(self, value):
-        self.B, self.C = u16_to_u8(value % 0x10000)
 
     @property
     def Z_flag(self):
