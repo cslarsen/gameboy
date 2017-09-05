@@ -282,7 +282,8 @@ opcodes = {
     0xee: ("XOR d8",          2, TYPE_R8,     8, ("Z", 0, 0, 0)),
     0xef: ("RST 28H",         1, TYPE_VOID,  16, None),
     0xf0: ("LDH A, (a8)",     2, TYPE_A8,    12, None),
-    0xf1: ("POP AF",          1, TYPE_VOID,  12, ("Z", "N", "H", "C")),
+    0xf1: ("POP AF",          1, TYPE_VOID,  12, None),
+    #0xf1: ("POP AF",          1, TYPE_VOID,  12, ("Z", "N", "H", "C")), # I believe this is wrong
     0xf2: ("LD A, (C)",       2, TYPE_VOID,   8, None),
     0xf3: ("DI",              1, TYPE_VOID,   4, None),
     0xf4: ("-",               1, TYPE_VOID,   4, None),

@@ -1188,10 +1188,7 @@ class CPU(object):
             elif opcode == 0xf1: # POP AF
                 self.AF = self.pop()
                 # According to official manual, no flags should be set here
-                #Z = self.AF == 0
-                #N = False
-                #H = False
-                #C = False
+                # Once again, the Pastraiser seem to have errors.
             elif opcode == 0xf2: # LD A, (C)
                 self.A = self.memory[self.C]
             elif opcode == 0xf3: # DI
