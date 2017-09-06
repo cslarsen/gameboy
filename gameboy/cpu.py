@@ -39,12 +39,48 @@ from instructions import (
     swap8,
 )
 
+class Register8(object):
+    def __init__(self, index):
+        self.index = index
+
+    def __get__(self, obj, objtype):
+        return obj.registers[self.index]
+
+    def __set__(self, obj, value):
+        obj.registers[self.index] = value % 0x100
+
+class Register16(object):
+    def __init__(self, index):
+        self.index = index
+
+    def __get__(self, obj, objtype):
+        return get16be(obj.registers, self.index)
+
+    def __set__(self, obj, value):
+        set16be(obj.registers, self.index, value)
+
 class CPU(object):
     """
     An 8-bit Sharp LR35902 CPU running at 4.19 MHz.
 
     This CPU is very similar to the Intel 8080 and the Zilog Z80.
     """
+    A = Register8(4)
+    F = Register8(5)
+    B = Register8(6)
+    C = Register8(7)
+    D = Register8(8)
+    E = Register8(9)
+    H = Register8(10)
+    L = Register8(11)
+
+    PC = Register16(0)
+    SP = Register16(2)
+    AF = Register16(4)
+    BC = Register16(6)
+    DE = Register16(8)
+    HL = Register16(10)
+
     def __init__(self, memory_controller):
         self.memory = memory_controller
         self.MHz = 4.194304
@@ -70,118 +106,6 @@ class CPU(object):
 
         self.screen_cycles = int((self.MHz*1e6 / self.memory.display.fps) /
                 self.memory.display.scanlines)
-
-    @property
-    def A(self):
-        return self.registers[4]
-
-    @A.setter
-    def A(self, n):
-        self.registers[4] = n % 0x100
-
-    @property
-    def F(self):
-        return self.registers[5]
-
-    @F.setter
-    def F(self, n):
-        self.registers[5] = n % 0x100
-
-    @property
-    def AF(self):
-        return get16be(self.registers, 4)
-
-    @AF.setter
-    def AF(self, nn):
-        set16be(self.registers, 4, nn)
-
-    @property
-    def B(self):
-        return self.registers[6]
-
-    @B.setter
-    def B(self, n):
-        self.registers[6] = n % 0x100
-
-    @property
-    def C(self):
-        return self.registers[7]
-
-    @C.setter
-    def C(self, n):
-        self.registers[7] = n % 0x100
-
-    @property
-    def BC(self):
-        return get16be(self.registers, 6)
-
-    @BC.setter
-    def BC(self, nn):
-        set16be(self.registers, 6, nn)
-
-    @property
-    def D(self):
-        return self.registers[8]
-
-    @D.setter
-    def D(self, n):
-        self.registers[8] = n % 0x100
-
-    @property
-    def E(self):
-        return self.registers[9]
-
-    @E.setter
-    def E(self, n):
-        self.registers[9] = n % 0x100
-
-    @property
-    def DE(self):
-        return get16be(self.registers, 8)
-
-    @DE.setter
-    def DE(self, nn):
-        set16be(self.registers, 8, nn)
-
-    @property
-    def H(self):
-        return self.registers[10]
-
-    @H.setter
-    def H(self, n):
-        self.registers[10] = n % 0x100
-
-    @property
-    def L(self):
-        return self.registers[11]
-
-    @L.setter
-    def L(self, n):
-        self.registers[11] = n % 0x100
-
-    @property
-    def HL(self):
-        return get16be(self.registers, 10)
-
-    @HL.setter
-    def HL(self, nn):
-        set16be(self.registers, 10, nn)
-
-    @property
-    def PC(self):
-        return get16be(self.registers, 0)
-
-    @PC.setter
-    def PC(self, nn):
-        set16be(self.registers, 0, nn)
-
-    @property
-    def SP(self):
-        return get16be(self.registers, 2)
-
-    @SP.setter
-    def SP(self, nn):
-        set16be(self.registers, 2, nn)
 
     def push(self, nn):
         self.memory.set16(self.SP, nn)
