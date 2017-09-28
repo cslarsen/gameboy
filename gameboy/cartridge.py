@@ -21,6 +21,7 @@ class Cartridge(object):
                     self.rom_bank.append(Memory(rom[start:], readonly=True,
                         name="Cartridge ROM bank #%d" % len(self.rom_bank)))
                     break
+            assert(len(self.rom_bank) == self.rom_banks)
 
     def __len__(self):
         return sum(map(len, self.rom_bank))

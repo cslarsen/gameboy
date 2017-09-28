@@ -11,6 +11,9 @@ run3:
 run:
 	python gameboy $(GAME)
 
+run-skip:
+	python gameboy $(GAME) --skip-boot
+
 run-pypy:
 	pypy gameboy $(GAME)
 

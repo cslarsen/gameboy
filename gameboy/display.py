@@ -11,9 +11,9 @@ from util import (
 
 class HostDisplay(object):
     """The actual display shown on the computer screen."""
-    def __init__(self, title, zoom=1):
-        self.width = 256
-        self.height = 256
+    def __init__(self, title, zoom=1, width=256, height=256):
+        self.width = width
+        self.height = height
 
         sdl2.ext.init()
 
@@ -90,12 +90,19 @@ class Display(object):
 
         if not no_display:
             self.window = HostDisplay("GameBoy", zoom=zoom)
+            self.tile_window = HostDisplay("Tiles", zoom=zoom, height=128)
         else:
             self.window = NoDisplay()
+            self.tile_window = NoDisplay()
 
         self.window.show()
+        self.tile_window.show()
+
         self.window.clear(0x474741)
+        self.tile_window.clear(0x474741)
+
         self.window.update()
+        self.tile_window.update()
 
         self.palette = {
             0: 0xffffff,
@@ -106,6 +113,7 @@ class Display(object):
 
         # Maps color to (x,y) pairs. Stupid, but that's how SDL wants it.
         self.pixels = {0: [], 1: [], 2: [], 3: []}
+        self.tile_pixels = {0: [], 1: [], 2: [], 3: []}
 
     def palette_to_rgb(self, color):
         """Converts GameBoy palette color to a 24-bit RGB value."""
@@ -117,6 +125,12 @@ class Display(object):
             color = self.palette_to_rgb(color)
             self.window.put_pixels(positions, color)
         self.pixels = {0: [], 1: [], 2: [], 3: []}
+
+    def flush_tile_pixels(self):
+        for color, positions in self.tile_pixels.items():
+            color = self.palette_to_rgb(color)
+            self.tile_window.put_pixels(positions, color)
+        self.tile_pixels = {0: [], 1: [], 2: [], 3: []}
 
     def put_pixel(self, x, y, color):
         self.window.put(x, y, self.palette_to_rgb(color))
@@ -160,6 +174,55 @@ class Display(object):
         self.palette[1] = colors[col1]
         self.palette[2] = colors[col2]
         self.palette[3] = colors[col3]
+
+    def render_tile_window(self, y):
+        # Read the tile table
+        if y < 64:
+            bitmap = 0x8800 - self.ram.offset
+        elif y < 128:
+            bitmap = 0x8000 - self.ram.offset
+        else:
+            return
+
+        table, signed = self.tile_table_address
+        table -= self.ram.offset
+
+        # Draw one scanline from the tiles. We do this by calculating the tile
+        # index and y-position
+
+        # For the given y line, find which tile number it is when the screen is
+        # divided up in 32x32 tiles that are 8x8 pixels each.
+        ypos = y & 0b11111000
+        index_offset = ypos << 2
+
+        # Position whithin this tile
+        yoff = y - ypos
+        bitmap += yoff*2
+        x = 0
+
+        table = range(256)*4
+        handle_sign = lambda x: x
+
+        # The background consists of 32x32 tiles, so find the tile index.
+        for index in range(32):
+            tile = 16*table[index_offset + index]
+
+            a = self.ram[bitmap + tile]
+            b = self.ram[bitmap + tile + 1]
+
+            colors = (
+                ((a & 0b10000000) >> 7) | ((b & 0b10000000) >> 6),
+                ((a & 0b01000000) >> 6) | ((b & 0b01000000) >> 5),
+                ((a & 0b00100000) >> 5) | ((b & 0b00100000) >> 4),
+                ((a & 0b00010000) >> 4) | ((b & 0b00010000) >> 3),
+                ((a & 0b00001000) >> 3) | ((b & 0b00001000) >> 2),
+                ((a & 0b00000100) >> 2) | ((b & 0b00000100) >> 1),
+                ((a & 0b00000010) >> 1) | ((b & 0b00000010)     ),
+                ((a & 0b00000001)     ) | ((b & 0b00000001) << 1))
+
+            for n, color in enumerate(colors):
+                self.tile_pixels[color] += [x+n, y]
+            x += 8
 
     def render_background_scanline(self, y):
         # Read the tile table
@@ -211,6 +274,7 @@ class Display(object):
 
         if self.background_display:
             self.render_background_scanline(self.LY)
+            self.render_tile_window(self.LY)
         else:
             # Set to blank
             self.window.line(0x0, 0, self.LY, self.window.width, self.LY)
@@ -218,9 +282,11 @@ class Display(object):
         if self.ly_rollover():
             self.read_palette()
             self.flush_pixels()
+            self.flush_tile_pixels()
             self.show_viewport()
             self.window.pump_events()
             self.window.update()
+            self.tile_window.update()
             self.calc_fps()
 
     @property

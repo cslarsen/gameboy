@@ -355,7 +355,7 @@ class CPU(object):
                 self.B += 1
                 Z = self.B == 0
             elif opcode == 0x05: # DEC B
-                H = (self.B % 0xf) == 0b0000 # TODO: Ok?
+                H = (self.B % 0xf) == 0b0000
                 self.B -= 1
                 Z = self.B == 0
                 # TODO: Implement half-carry flag
@@ -380,9 +380,9 @@ class CPU(object):
                 self.C += 1
                 Z = self.C == 0
             elif opcode == 0x0d: # DEC C
+                H = (self.C % 0xf) == 0b0000
                 self.C -= 1
                 Z = self.C == 0
-                # TODO: set H flag
             elif opcode == 0x0e: # LD C, d8
                 self.C = arg
             elif opcode == 0x0f: # RRCA
@@ -405,9 +405,9 @@ class CPU(object):
                 self.D += 1
                 Z = self.D == 0
             elif opcode == 0x15: # DEC D
+                H = (self.D % 0xf) == 0b0000
                 self.D -= 1
                 Z = self.D == 0
-                # TODO: set H flag
             elif opcode == 0x16: # LD D, d8
                 self.D = arg
             elif opcode == 0x17: # RLA
@@ -431,9 +431,9 @@ class CPU(object):
                 self.E += 1
                 Z = self.E == 0
             elif opcode == 0x1d: # DEC E
+                H = (self.E % 0xf) == 0b0000
                 self.E -= 1
                 Z = (self.E == 0)
-                # TODO: set H flag
             elif opcode == 0x1e: # LD E, d8
                 self.E = arg
             elif opcode == 0x1f: # RRA
@@ -459,9 +459,9 @@ class CPU(object):
                 self.H += 1
                 Z = self.H == 0
             elif opcode == 0x25: # DEC H
+                H = (self.H % 0xf) == 0b0000
                 self.H -= 1
                 Z = self.H == 0
-                # TODO: Set H flag
             elif opcode == 0x26: # LD H, d8
                 self.H = arg
             elif opcode == 0x27: # DAA
@@ -490,9 +490,9 @@ class CPU(object):
                 self.L += 1
                 Z = self.L == 0
             elif opcode == 0x2d: # DEC L
+                H = (self.L % 0xf) == 0b0000
                 self.L -= 1
                 Z = self.L == 0
-                # TODO: Set H
             elif opcode == 0x2e: # LD L, d8
                 self.L = arg
             elif opcode == 0x2f: # CPL
@@ -519,10 +519,11 @@ class CPU(object):
                 self.memory[self.HL] = n
                 Z = n == 0
             elif opcode == 0x35: # DEC (HL)
-                n = (self.memory[self.HL] - 1) % 0x100
+                n = self.memory[self.HL]
+                H = (n % 0xf) == 0b0000
+                n = (n - 1) % 0x100
                 self.memory[self.HL] = n
                 Z = n == 0
-                # TODO: Set H
             elif opcode == 0x36: # LD (HL), d8
                 self.memory[self.HL] = arg
             elif opcode == 0x37:  # SCF
@@ -546,9 +547,9 @@ class CPU(object):
                 self.A += 1
                 Z = (self.A == 0)
             elif opcode == 0x3d: # DEC A
+                H = (self.A % 0xf) == 0b0000
                 self.A -= 1
                 Z = (self.A == 0)
-                # TODO: set H flag
             elif opcode == 0x3e: # LD A, d8
                 self.A = arg
             elif opcode == 0x3f: # CCF
