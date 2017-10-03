@@ -543,7 +543,7 @@ class CPU(object):
             elif opcode == 0x3b: # DEC SP
                 self.SP -= 1
             elif opcode == 0x3c: # INC A
-                H = (n & 0x0f) == 0b1111
+                H = (self.A 0x0f) == 0b1111
                 self.A += 1
                 Z = (self.A == 0)
             elif opcode == 0x3d: # DEC A
