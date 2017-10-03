@@ -486,7 +486,7 @@ class CPU(object):
             elif opcode == 0x2b: # DEC HL
                 self.HL -= 1
             elif opcode == 0x2c: # INC L
-                H = (self.C & 0x0f) == 0b1111
+                H = (self.L & 0x0f) == 0b1111
                 self.L += 1
                 Z = self.L == 0
             elif opcode == 0x2d: # DEC L
