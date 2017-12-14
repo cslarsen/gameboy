@@ -48,6 +48,7 @@ References
   * [GameBoy Programming Info](https://fms.komkon.org/GameBoy/Tech/Software.html)
   * [GameBoy Programming Manual](http://www.chrisantonellis.com/files/gameboy/gb-programming-manual.pdf)
   * [Hacker's Delight](http://www.hackersdelight.org)
+  * [Mr. Do! source code](http://www.pauliehughes.com/page21/files/mrdo.asm)
   * [Pan Docs](http://bgb.bircd.org/pandocs.htm#cpuinstructionset)
   * [The Game Boy Project](http://marc.rawer.de/Gameboy/Docs/GBProject.pdf)
 
