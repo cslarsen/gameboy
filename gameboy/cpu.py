@@ -406,7 +406,7 @@ class CPU(object):
             elif opcode == 0x13: # INC DE
                 self.DE += 1
             elif opcode == 0x14:  # INC D
-                H = (self.C & 0x0f) == 0b1111
+                H = (self.D & 0xf) == 0b1111
                 self.D += 1
                 Z = self.D == 0
             elif opcode == 0x15: # DEC D
@@ -432,7 +432,7 @@ class CPU(object):
                 self.E |= self.C_flag << 7
                 Z = (self.E == 0)
             elif opcode == 0x1c: # INC E
-                H = (self.C & 0x0f) == 0b1111
+                H = (self.E & 0x0f) == 0b1111
                 self.E += 1
                 Z = self.E == 0
             elif opcode == 0x1d: # DEC E
@@ -460,7 +460,7 @@ class CPU(object):
             elif opcode == 0x23: # INC HL
                 self.HL += 1
             elif opcode == 0x24: # INC H
-                H = (self.C & 0x0f) == 0b1111
+                H = (self.H & 0x0f) == 0b1111
                 self.H += 1
                 Z = self.H == 0
             elif opcode == 0x25: # DEC H
