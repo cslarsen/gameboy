@@ -34,6 +34,8 @@ extended_opcodes = {
     0x35: ("SWAP L",          2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
     0x36: ("SWAP (HL)",       2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
     0x37: ("SWAP A",          2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
+    0x60: ("BIT 4, B",        2, TYPE_VOID,   8, ("Z", 0, 1, None)),
+    0x6b: ("BIT 5, E",        2, TYPE_VOID,   8, ("Z", 0, 1, None)),
     0x7c: ("BIT 7, H",        1, TYPE_VOID,   8, ("Z", 0, 1)),
 }
 

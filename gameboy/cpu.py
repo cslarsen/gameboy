@@ -305,8 +305,13 @@ class CPU(object):
                 self.C = (self.C << 1) & 0xff
                 self.C |= self.C_flag
                 Z = (self.C == 0)
+            elif opcode == 0x60: # BIT 4, B
+                self.B = self.B | 0b00001000
+                Z = (self.B & 1<<3) == 0
+            elif opcode == 0x6b: # BIT 5, E
+                Z = (self.E & 1<<4) == 0
             elif opcode == 0x7c: # BIT 7, H
-                Z = not (self.H & (1<<7))
+                Z = (self.H & 1<<6) == 0
             elif opcode == 0x30: # SWAP B
                 self.B = swap8(self.B)
                 Z = (self.B == 0)
@@ -362,7 +367,7 @@ class CPU(object):
             elif opcode == 0x06: # LD B, d8
                 self.B = arg
             elif opcode == 0x07: # RLCA
-                self.C_flag = (self.A & (1<<7)) >> 7
+                self.C_flag = (self.A & 0b10000000) >> 7
                 self.A <<= 1
             elif opcode == 0x08: # LD (a16), SP
                 self.memory.set16(arg, self.SP)
@@ -370,7 +375,7 @@ class CPU(object):
                 n = self.HL + self.BC
                 C = n > 0xffff
                 self.HL = n
-                # TOTO: Set H
+                # TODO: Set H
             elif opcode == 0x0a: # LD A, (BC)
                 self.A = self.memory[self.BC]
             elif opcode == 0x0b: # DEC BC
