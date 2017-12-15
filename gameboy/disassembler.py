@@ -23,6 +23,12 @@ def disassemble_str(code, start=0x0000, length=None, instructions=1):
     disassemble(code, start, length, instructions, stream)
     return stream.read()
 
+def flag_str(flag):
+    if flag is None:
+        return "-"
+    else:
+        return str(flag)
+
 def disassemble(code, start=0x0000, length=None, instructions=None,
         stream=sys.stdout):
     """Disassembles binary code."""
@@ -95,7 +101,7 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
                 for flag in flags:
                     if not flag in ("Z", "N", "H", "C", 0, 1, None):
                         raise RuntimeError("Invalid flag: %s" % flag)
-                write(" flags %s" % " ".join(map(str, flags)))
+                write(" flags %s" % " ".join(map(flag_str, flags)))
 
             prefix = False
             write("\n")
