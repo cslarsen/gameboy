@@ -178,3 +178,34 @@ Day 8
 Another day where I can only spend a really small amount of time on the
 project. Running errors now break into the debugger, and I implemented bank
 switching. Concentrating on finishing up the rest of the instructions.
+
+Day 9?
+------
+
+It's been a *long* while since I last looked at this project. So I've done bits
+and pieces here and there, but haven't been able to spend time in depth with
+it. I've added all the opcodes for disassembly and decoding, but not
+implemented all of them. Found out that Dr. Mario is supposed to be easy to
+emulate, so I'm using that. Also, after booting two registers have incorrect
+values according to some docs: F and L. Would very much like to know why.
+
+As to games, they all crash pretty quickly but at random places in memory. I
+haven't implemented any interrupts, so I guess that's what I'll have to do.
+Might be that memory mapping is incorrect as well. Why it crashes in random
+places, I have no idea about. Perhaps it runs off some hand coded region
+because some interrupts never fire, then just continue running down into data
+regions. But I have a feeling that it shouldn't be this way, even if I haven't
+implemented interrupts yet. So I definitely need to figure this out.
+
+I don't have sprites either. What I need to do is to debug some code to figure
+out what it's actually doing and what I expect to see on the screen. Just too
+bad the entire thing is *dead slow*. Quite tempted to use C++ and Cython at
+this point. It's the screen drawing that's just so insanely slow. INSANELY
+SLOW. Seems to be due to PySDL's straight out incompetent way of handling 2D
+data.
+
+Anyway, even the background tiles for Dr. Mario seems completely wrong. I found
+another game. Mr. Do!, which actually has its source code available. That might
+be a good game to emulate, since the source gives good clues on what's supposed
+to happen. Still haven't cheated by looking at other people's code. Haven't
+even read forums, except to find out which games are easy to emulate.
