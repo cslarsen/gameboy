@@ -73,7 +73,7 @@ class Debugger(object):
 
         if c == "q":
             self.quit = True
-        elif c == "s":
+        elif c in ("s", "n"):
             self.step()
         elif c == "b":
             try:
@@ -88,7 +88,7 @@ class Debugger(object):
                     break
         elif c == "r":
             self.gameboy.cpu.print_registers()
-        elif c == "h":
+        elif c in ("h", "?"):
             self.print_help()
         elif c == "m":
             start = number(args, 0, 0)
