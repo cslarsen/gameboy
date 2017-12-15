@@ -312,6 +312,10 @@ class CPU(object):
                 Z = (self.E & 1<<5) == 0
             elif opcode == 0x7c: # BIT 7, H
                 Z = (self.H & (1<<7)) == 0
+            elif opcode == 0x21: # SLA C
+                C = (self.C & (1<<7)) >> 7
+                self.C <<= 1
+                Z = self.C == 0
             elif opcode == 0x30: # SWAP B
                 self.B = swap8(self.B)
                 Z = (self.B == 0)

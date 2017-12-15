@@ -26,6 +26,7 @@ prefix_opcodes = (0xcb, 0x10)
 extended_opcodes = {
     0x11: ("RL C",            1, TYPE_VOID,   8, ("Z", 0, 0, "C")),
     0x1b: ("RR E",            2, TYPE_VOID,   8, ("Z", 0, 0, "C")),
+    0x21: ("SLA C",           2, TYPE_VOID,   8, ("Z", 0, 0, "C")),
     0x30: ("SWAP B",          2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
     0x31: ("SWAP C",          2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
     0x32: ("SWAP D",          2, TYPE_VOID,   8, ("Z", 0, 0, 0)),
