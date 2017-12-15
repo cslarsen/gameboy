@@ -35,7 +35,8 @@ class Debugger(object):
         self.gameboy = gameboy
         self.newline_on_break = False
         self.quit = False
-        self.previous_command = (None, None)
+        self.previous_command = ("", None)
+        self.next_address = 0x0000
 
     @property
     def PC(self):
@@ -66,6 +67,10 @@ class Debugger(object):
             return
 
         if command == "": # ENTER
+            if (self.previous_command is not None and
+                    self.previous_command[0][0] == "l"):
+                # Continue listing from previous position
+                 self.previous_command = ("l", [hex(self.next_address)])
             self.dispatch(*self.previous_command)
             return
 
@@ -115,7 +120,7 @@ class Debugger(object):
                 except ValueError as e:
                     log(e)
                     return
-            self.disassemble(address, instructions)
+            self.next_address = self.disassemble(address, instructions)
         else:
             log("Unknown command: %s" % command)
             return
@@ -160,7 +165,7 @@ class Debugger(object):
         for n in range(address, address+instructions*4):
             code.append(self.gameboy.cpu.memory[n])
         try:
-            disassemble(code, start=address, instructions=instructions)
+            return disassemble(code, start=address, instructions=instructions)
         except IndexError:
             log("...")
 

@@ -34,6 +34,7 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
     """Disassembles binary code."""
     write = stream.write
     index = 0
+    address = start + index
 
     if length is None:
         length = len(code)
@@ -42,9 +43,13 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
     prefix = False
 
     while index < length:
+        address = start + index
         try:
-            address = start + index
             opcode = code[index]
+        except KeyError as e:
+            raise KeyError("Unknown opcode 0x%0.2x" % (int(str(e))))
+
+        try:
             table = opcodes if not prefix else extended_opcodes
             name, bytelen, type, cycles, flags = table[opcode]
         except KeyError as e:
@@ -114,3 +119,4 @@ def disassemble(code, start=0x0000, length=None, instructions=None,
             instructions -= 1
             if instructions == 0:
                 break
+    return address
