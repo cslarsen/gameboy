@@ -371,7 +371,7 @@ class CPU(object):
             elif opcode == 0x06: # LD B, d8
                 self.B = arg
             elif opcode == 0x07: # RLCA
-                self.C_flag = (self.A & 0b10000000) >> 7
+                self.C_flag = (self.A & (1<<7)) >> 7
                 self.A <<= 1
             elif opcode == 0x08: # LD (a16), SP
                 self.memory.set16(arg, self.SP)
