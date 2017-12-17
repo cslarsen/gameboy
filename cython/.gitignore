@@ -1,0 +1,5 @@
+*.dSYM
+*.o
+*.so
+_gameboy.c
+_gameboy.cpp
