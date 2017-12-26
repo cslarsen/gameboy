@@ -5,6 +5,10 @@ from libc.stdint cimport uint8_t, uint16_t
 from libcpp cimport bool
 from libcpp.string cimport string
 
+cdef extern from "display.hpp":
+    cdef cppclass CDisplay "Display":
+        CDisplay()
+
 cdef extern from "cpu.hpp":
     cdef cppclass CRegisters "Registers":
         uint16_t pc
@@ -50,3 +54,10 @@ cdef class CPU(object):
     @pc.setter
     def pc(self, uint16_t value):
         self._cpu.reg.pc = value
+
+cdef class Display(object):
+    cdef CDisplay _display
+
+    def __cinit__(self):
+        self._display = CDisplay()
+
