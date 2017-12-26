@@ -4,6 +4,9 @@ TARGETS := _gameboy.so
 PYFLAGS := $(shell python-config --includes --libs)
 SDLFLAGS := $(shell sdl2-config --cflags --libs)
 
+run: all
+	/usr/bin/python test.py
+
 all: $(TARGETS)
 
 %.cpp: %.pyx
